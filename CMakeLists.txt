@@ -3,4 +3,4 @@ project(University_game)
 
 set(CMAKE_CXX_STANDARD 23)
 
-add_executable(University_game main.cpp )
+add_executable(University_game main.cpp structure.h)
