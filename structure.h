@@ -3,8 +3,13 @@
 
 #include <string>
 #include <utility>
+#include <iostream>
+#include <vector>
+#include <SFML/Graphics.hpp>
+#include <SFML/Graphics/Texture.hpp>
 
 namespace university_game {
+
 class quest {
 private:
     std::string name;
@@ -161,6 +166,89 @@ public:
                 break;
             }
         }
+    }
+};
+
+const int v_table = 13;
+const int h_table = 5;
+const int cell_v_size = 90;
+const int cell_h_size = 125;
+class game : public sf::Drawable, public sf::Transformable {
+private:
+    player active_player;
+    std::vector<std::vector<bool>> map;
+    int active_v = 0;
+    int active_h = 0;
+public:
+    game() {
+        map.resize(h_table);
+        for (auto &line : map) {
+            line.resize(v_table);
+        }
+        map[0][0] = true;
+    }
+
+    void move(int direction) {
+        if (direction == 1 && active_v < v_table - 1) {
+            map[active_h][active_v++] = false;
+            map[active_h][active_v] = true;
+            return;
+        }
+        if (direction == 2 && active_h > 0) {
+            map[active_h--][active_v] = false;
+            map[active_h][active_v] = true;
+            return;
+        }
+        if (direction == 3 && active_v > 0) {
+            map[active_h][active_v--] = false;
+            map[active_h][active_v] = true;
+            return;
+        }
+        if (direction == 4 && active_h < h_table - 1) {
+            map[active_h++][active_v] = false;
+            map[active_h][active_v] = true;
+            return;
+        }
+    }
+
+    [[nodiscard]] player &get_player() {
+        return active_player;
+    }
+
+    void draw(sf::RenderTarget& target, sf::RenderStates states) const override {
+        states.transform *= getTransform();
+        sf::Color color = sf::Color(200, 100, 200);
+
+        // Рисуем рамку игрового поля
+        sf::RectangleShape shape(sf::Vector2f(1200, 640));
+        shape.setOutlineThickness(2.f);
+        shape.setOutlineColor(color);
+        shape.setFillColor(sf::Color::Transparent);
+        target.draw(shape, states);
+
+        // Подготавливаем рамку для отрисовки всех плашек
+        shape.setSize(sf::Vector2f(cell_v_size - 2, cell_h_size - 2));
+        shape.setOutlineThickness(1.f);
+        shape.setOutlineColor(color);
+        shape.setFillColor(sf::Color::Transparent);
+
+        for (unsigned int i = 0; i < h_table; i++) {
+            for (unsigned int j = 0; j < v_table; j++) {
+                shape.setOutlineColor(color);
+                sf::Vector2f position(j * (cell_v_size + 2) + 5.f, i * (cell_h_size + 2) + 5.f);
+                shape.setPosition(position);
+                target.draw(shape, states);
+            }
+        }
+        sf::Texture active_player_texture;
+        active_player_texture.loadFromFile("C:/Users/bonda/cppgame/University_game/images/player_default.png");
+
+        sf::RectangleShape active_player_shape(sf::Vector2f(cell_v_size, cell_h_size));
+        active_player_shape.setTexture(&active_player_texture);
+
+        sf::Vector2f active_player_position(active_v * (cell_v_size + 2) + 5.f, active_h * (cell_h_size + 2) + 5.f);
+        active_player_shape.setPosition(active_player_position);
+        target.draw(active_player_shape, states);
     }
 };
 }  //namespace university_game
