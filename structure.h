@@ -5,6 +5,7 @@
 #include <utility>
 #include <iostream>
 #include <vector>
+#include <string>
 #include <SFML/Graphics.hpp>
 #include <SFML/Graphics/Texture.hpp>
 
@@ -134,6 +135,7 @@ private:
     int active_v = v_table / 2;
     int active_h = h_table / 2;
     std::string quest_taken;
+    int direction = 4;
 
 public:
     player() = default;
@@ -178,6 +180,14 @@ public:
         return inventory;
     }
 
+    [[nodiscard]] int get_direction() const {
+        return direction;
+    }
+
+    void set_direction(int new_direction) {
+        direction = new_direction;
+    }
+
     void set_quest_taken(const std::string& new_quest_name) {
         quest_taken = new_quest_name;
     }
@@ -209,9 +219,10 @@ public:
 
     [[nodiscard]] std::string display_available_quests() const {
         std::string res;
+        int count = 1;
         for (const auto &m_quest : list_of_quests) {
             if (m_quest.get_required_level() <= get_level()) {
-                res += m_quest.get_name() + " ";
+                res += std::to_string(count++) + ") " + m_quest.get_name() + " ";
                 res += "\t'" + m_quest.get_condition() + "'\n";
                 res += m_quest.get_description() + "\n\n";
             }
@@ -225,8 +236,9 @@ public:
             res = "You have no items yet.\n\n";
             return res;
         }
+        int count = 1;
         for (const auto &m_item : inventory) {
-            res += m_item.get_info();
+            res += std::to_string(count++) + ") " + m_item.get_info();
         }
         return res;
     }
@@ -261,9 +273,18 @@ public:
         inventory_text.setStyle(sf::Text::Bold);
         inventory_text.setPosition(active_v * (cell_v_size) + 150, active_h * (cell_h_size) - 120);
 
+        sf::Text level_text;
+        level_text.setFont(text_font);
+        level_text.setString("Your current level: " + std::to_string(get_level()));
+        level_text.setCharacterSize(30);
+        level_text.setFillColor(sf::Color::Black);
+        level_text.setStyle(sf::Text::Bold);
+        level_text.setPosition(active_v * (cell_v_size) - 240, active_h * (cell_h_size) + 300);
+
         target.draw(frame_shape, states);
         target.draw(quest_text, states);
         target.draw(inventory_text, states);
+        target.draw(level_text, states);
 
         quest_text.setString(display_available_quests());
         quest_text.setCharacterSize(15);
@@ -418,9 +439,12 @@ public:
         }
         teachers.resize(2);
         displayed_items.resize(1);
-        map[1][1] = 2;
-        map[5][12] = 3;
-        map[2][10] = -1;
+        map = {{0, 0, 0, 0, 0, -2, 0, 0, 0, 0, 0, 0, 0, 0},
+               {0, 2, 0, 0, 0, -2, 0, 0, 0, 0, 0, 0, 0, 0},
+               {0, 0, 0, 0, 0, -2, 0, 0, 0, 0, -1, 0, 0, 0},
+               {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+               {-2, -2, -2, -2, -2, -2, 0, 0, 0, 0, 0, 0, 0, 0},
+               {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0}};
     }
 
     [[nodiscard]] int check_presence_of_teacher() {
@@ -453,6 +477,7 @@ public:
     void move(int direction) {
         int active_v = active_player.get_v();
         int active_h = active_player.get_h();
+        active_player.set_direction(direction);
         if (direction == 1 && active_v < v_table - 1 && map[active_h][active_v + 1] == 0) {
             map[active_h][active_v++] = 0;
             map[active_h][active_v] = 1;
@@ -501,23 +526,41 @@ public:
         frame_shape.setOutlineColor(outline_color);
         target.draw(frame_shape, states);
 
+        sf::Texture walkable_field_texture;
+        walkable_field_texture.loadFromFile("C:/Users/bonda/cppgame/University_game/images/walkable_field.png");
+
+        sf::Texture unwalkable_field_texture;
+        unwalkable_field_texture.loadFromFile("C:/Users/bonda/cppgame/University_game/images/unwalkable_field.png");
+
         // Подготавливаем рамку для отрисовки всех плашек
         sf::RectangleShape shape;
         shape.setSize(sf::Vector2f(cell_v_size, cell_h_size));
-        shape.setFillColor(bg_color);
         //shape.setOutlineThickness(1.f);
         //shape.setOutlineColor(color);
 
         for (unsigned int i = 0; i < h_table; i++) {
             for (unsigned int j = 0; j < v_table; j++) {
-                shape.setFillColor(bg_color);
+                if (map[i][j] == -2) {
+                    shape.setTexture(&unwalkable_field_texture);
+                } else {
+                    shape.setTexture(&walkable_field_texture);
+                }
                 sf::Vector2f position(j * (cell_v_size), i * (cell_h_size));
                 shape.setPosition(position);
                 target.draw(shape, states);
             }
         }
-        sf::Texture active_player_texture;
-        active_player_texture.loadFromFile("C:/Users/bonda/cppgame/University_game/images/player_default.png");
+        sf::Texture active_player_texture_front;
+        active_player_texture_front.loadFromFile("C:/Users/bonda/cppgame/University_game/images/player_default.png");
+
+        sf::Texture active_player_texture_right;
+        active_player_texture_right.loadFromFile("C:/Users/bonda/cppgame/University_game/images/player_default_right.png");
+
+        sf::Texture active_player_texture_left;
+        active_player_texture_left.loadFromFile("C:/Users/bonda/cppgame/University_game/images/player_default_left.png");
+
+        sf::Texture active_player_texture_back;
+        active_player_texture_back.loadFromFile("C:/Users/bonda/cppgame/University_game/images/player_default_back.png");
 
         sf::Texture teacher_texture;
         teacher_texture.loadFromFile("C:/Users/bonda/cppgame/University_game/images/teacher_default.png");
@@ -526,7 +569,15 @@ public:
         item_texture.loadFromFile("C:/Users/bonda/cppgame/University_game/images/item_default.png");
 
         sf::RectangleShape active_player_shape(sf::Vector2f(cell_v_size, cell_h_size));
-        active_player_shape.setTexture(&active_player_texture);
+        if (active_player.get_direction() == 1) {
+            active_player_shape.setTexture(&active_player_texture_right);
+        } else if (active_player.get_direction() == 2) {
+            active_player_shape.setTexture(&active_player_texture_back);
+        } else if (active_player.get_direction() == 3) {
+            active_player_shape.setTexture(&active_player_texture_left);
+        } else if (active_player.get_direction() == 4) {
+            active_player_shape.setTexture(&active_player_texture_front);
+        }
         sf::Vector2f active_player_position(active_v * (cell_v_size),
                                             active_h * (cell_h_size));
         active_player_shape.setPosition(active_player_position);
