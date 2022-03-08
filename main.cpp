@@ -84,7 +84,9 @@ int main() {
                     }
                     if (event.key.code == sf::Keyboard::X && !inventory_and_quests_opened) {
                         id = my_game.check_presence_of_teacher();
-                        if (id > 0 && (executing_id == 0 || executing_id == id || my_game.get_teachers()[executing_id - 2].get_quest_stage() > 2)) {
+                        if (id > 0 && (executing_id == 0
+                            || executing_id == id
+                            || my_game.get_teachers()[executing_id - 2].get_quest_stage() > 2)) {
                             executing_id = id;
                             teacher_speaking = true;
                         }
@@ -99,7 +101,6 @@ int main() {
             }
             window.clear();
             window.draw(my_game);
-
             if (inventory_and_quests_opened) {
                 window.draw(my_game.get_player());
             }
@@ -113,6 +114,7 @@ int main() {
                 teacher_speaking = false;
                 my_game.get_teachers()[id - 2].satisfy_quest(my_game.get_player());
             }
+
             window.display();
         } else {
             sf::Event event{};
