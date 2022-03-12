@@ -9,7 +9,7 @@ int main() {
     standard_view.setCenter(640, 360);
 
     sf::Font text_font;
-    text_font.loadFromFile("C:/Users/bonda/cppgame/University_game/fonts/arial.ttf");
+    text_font.loadFromFile("fonts/arial.ttf");
 
     sf::Text head_text;
     head_text.setFont(text_font);
