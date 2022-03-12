@@ -279,7 +279,7 @@ public:
         split_shape.setPosition(active_v * (cell_v_size) + 100, active_h * (cell_h_size) - 130);
 
         sf::Font text_font;
-        text_font.loadFromFile("C:/Users/bonda/cppgame/University_game/fonts/arial.ttf");
+        text_font.loadFromFile("fonts/arial.ttf");
 
         sf::Text quest_text;
         quest_text.setFont(text_font);
@@ -439,7 +439,7 @@ public:
         frame_shape.setPosition(active_v * (cell_v_size) - 250, active_h * (cell_h_size) - 50);
 
         sf::Font text_font;
-        text_font.loadFromFile("C:/Users/bonda/cppgame/University_game/fonts/arial.ttf");
+        text_font.loadFromFile("fonts/arial.ttf");
 
         sf::Text quest_text;
         quest_text.setFont(text_font);
@@ -609,10 +609,10 @@ public:
         target.draw(frame_shape, states);
 
         sf::Texture walkable_field_texture;
-        walkable_field_texture.loadFromFile("C:/Users/bonda/cppgame/University_game/images/walkable_field.png");
+        walkable_field_texture.loadFromFile("images/walkable_field.png");
 
         sf::Texture unwalkable_field_texture;
-        unwalkable_field_texture.loadFromFile("C:/Users/bonda/cppgame/University_game/images/unwalkable_field.png");
+        unwalkable_field_texture.loadFromFile("images/unwalkable_field.png");
 
         // Подготавливаем рамку для отрисовки всех плашек
         sf::RectangleShape shape;
@@ -633,22 +633,22 @@ public:
             }
         }
         sf::Texture active_player_texture_front;
-        active_player_texture_front.loadFromFile("C:/Users/bonda/cppgame/University_game/images/player_default.png");
+        active_player_texture_front.loadFromFile("images/player_default.png");
 
         sf::Texture active_player_texture_right;
-        active_player_texture_right.loadFromFile("C:/Users/bonda/cppgame/University_game/images/player_default_right.png");
+        active_player_texture_right.loadFromFile("images/player_default_right.png");
 
         sf::Texture active_player_texture_left;
-        active_player_texture_left.loadFromFile("C:/Users/bonda/cppgame/University_game/images/player_default_left.png");
+        active_player_texture_left.loadFromFile("images/player_default_left.png");
 
         sf::Texture active_player_texture_back;
-        active_player_texture_back.loadFromFile("C:/Users/bonda/cppgame/University_game/images/player_default_back.png");
+        active_player_texture_back.loadFromFile("images/player_default_back.png");
 
         sf::Texture teacher_texture;
-        teacher_texture.loadFromFile("C:/Users/bonda/cppgame/University_game/images/teacher_default.png");
+        teacher_texture.loadFromFile("images/teacher_default.png");
 
         sf::Texture item_texture;
-        item_texture.loadFromFile("C:/Users/bonda/cppgame/University_game/images/item_default.png");
+        item_texture.loadFromFile("images/item_default.png");
 
         sf::RectangleShape active_player_shape(sf::Vector2f(cell_v_size, cell_h_size));
         if (active_player.get_direction() == 1) {
