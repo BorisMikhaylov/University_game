@@ -17,8 +17,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          apt-get update
-          apt-get install -y build-essential cmake libsfml-dev
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake libsfml-dev
 
       - name: Compile
         run: |
