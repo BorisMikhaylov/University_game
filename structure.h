@@ -132,8 +132,10 @@ private:
     int level = 1;
     std::vector<quest> list_of_quests{};
     std::vector<item> inventory{};
-    int active_v = v_table / 2;
-    int active_h = h_table / 2;
+    double active_v = v_table / 2;
+    double active_h = h_table / 2;
+    int active_v_compare = v_table / 2;
+    int active_h_compare = h_table / 2;
     std::string quest_taken;
     int direction = 4;
 
@@ -147,7 +149,9 @@ public:
           list_of_quests(list_of_quests_),
           inventory(inventory_),
           active_v(v_table / 2),
-          active_h(h_table / 2) {}
+          active_h(h_table / 2),
+          active_v_compare(v_table / 2),
+          active_h_compare(h_table / 2){}
 
     void set_name(std::string new_name) {
         name = std::move(new_name);
@@ -164,12 +168,20 @@ public:
         return list_of_quests;
     }
 
-    [[nodiscard]] int get_v() const {
+    [[nodiscard]] double get_v() const {
         return active_v;
     }
 
-    [[nodiscard]] int get_h() const {
+    [[nodiscard]] double get_h() const {
         return active_h;
+    }
+
+    [[nodiscard]] int get_v_compare() const {
+        return active_v_compare;
+    }
+
+    [[nodiscard]] int get_h_compare() const {
+        return active_h_compare;
     }
 
     [[nodiscard]] std::string get_quest_taken() const {
@@ -192,12 +204,20 @@ public:
         quest_taken = new_quest_name;
     }
 
-    void set_v(int new_v) {
+    void set_v(double new_v) {
         active_v = new_v;
     }
 
-    void set_h(int new_h) {
+    void set_h(double new_h) {
         active_h = new_h;
+    }
+
+    void set_v_compare(int new_v) {
+        active_v_compare = new_v;
+    }
+
+    void set_h_compare(int new_h) {
+        active_h_compare = new_h;
     }
 
     void add_to_inventory(const item& new_item) {
@@ -254,6 +274,10 @@ public:
         frame_shape.setOutlineColor(outline_color);
         frame_shape.setPosition(active_v * (cell_v_size) - 250, active_h * (cell_h_size) - 130);
 
+        sf::RectangleShape split_shape(sf::Vector2f(10, 480));
+        split_shape.setFillColor(outline_color);
+        split_shape.setPosition(active_v * (cell_v_size) + 100, active_h * (cell_h_size) - 130);
+
         sf::Font text_font;
         text_font.loadFromFile("C:/Users/bonda/cppgame/University_game/fonts/arial.ttf");
 
@@ -296,6 +320,7 @@ public:
 
         target.draw(quest_text, states);
         target.draw(inventory_text, states);
+        target.draw(split_shape, states);
     }
 };
 
@@ -341,8 +366,13 @@ public:
         return quest_stage;
     }
 
+    [[nodiscard]] std::string get_associated_quest_name() const {
+        return associated_quest_name;
+    }
+
     void satisfy_quest(player &player_) {
-        if (!(player_.get_quest_taken().empty() || player_.get_quest_taken() == associated_quest_name)) {
+        if (!(player_.get_quest_taken().empty()
+        || player_.get_quest_taken() == associated_quest_name)) {
             return;
         }
         for (auto &quest : player_.get_list_of_quests()) {
@@ -354,6 +384,11 @@ public:
                 quest_stage++;
                 player_.set_quest_taken(associated_quest_name);
             } else if (quest.get_condition() == "IN PROGRESS") {
+                if (quest.get_required_item().get_name() == "none") {
+                    quest_stage++;
+                    quest.mark_as_completed();
+                    return;
+                }
                 for (auto &item_ : player_.get_inventory()) {
                     if (item_.get_name() != quest.get_required_item().get_name()) {
                         continue;
@@ -372,10 +407,14 @@ public:
             } else if (quest.get_condition() == "COMPLETED") {
                 quest_stage++;
                 bool flag = false;
-                for (auto &new_item_ : player_.get_inventory()) {
-                    if (new_item_.get_name() == quest.get_award().get_name()) {
-                        flag = true;
-                        break;
+                if (quest.get_award().get_name() == "none") {
+                    flag = true;
+                } else {
+                    for (auto &new_item_ : player_.get_inventory()) {
+                        if (new_item_.get_name() == quest.get_award().get_name()) {
+                            flag = true;
+                            break;
+                        }
                     }
                 }
                 if (!flag) {
@@ -448,21 +487,29 @@ public:
     }
 
     [[nodiscard]] int check_presence_of_teacher() {
-        int active_v = active_player.get_v();
-        int active_h = active_player.get_h();
-        for (auto &teacher : teachers) {
-            int teacher_active_v = teacher.get_v();
-            int teacher_active_h = teacher.get_h();
+        int active_v = active_player.get_v_compare();
+        int active_h = active_player.get_h_compare();
+        for (auto &teacher_ : teachers) {
+            int teacher_active_v = teacher_.get_v();
+            int teacher_active_h = teacher_.get_h();
             if (abs(active_h - teacher_active_h) <= 1 && abs(active_v - teacher_active_v) <= 1) {
-                return teacher.get_id();
+                for (auto &quest_ : active_player.get_list_of_quests()) {
+                    if (quest_.get_name() == teacher_.get_associated_quest_name()) {
+                        if (quest_.get_required_level() <= active_player.get_level()) {
+                            return teacher_.get_id();
+                        } else {
+                            return 0;
+                        }
+                    }
+                }
             }
         }
         return 0;
     }
 
     void take_item_if_possible() {
-        int active_v = active_player.get_v();
-        int active_h = active_player.get_h();
+        int active_v = active_player.get_v_compare();
+        int active_h = active_player.get_h_compare();
         for (auto &item_ : displayed_items) {
             int item_active_v = item_.get_v();
             int item_active_h = item_.get_h();
@@ -474,28 +521,59 @@ public:
         }
     }
 
-    void move(int direction) {
-        int active_v = active_player.get_v();
-        int active_h = active_player.get_h();
+    bool move(int direction, int iteration) {
+        double active_v = active_player.get_v();
+        double active_h = active_player.get_h();
+        int active_v_compare = active_player.get_v_compare();
+        int active_h_compare = active_player.get_h_compare();
         active_player.set_direction(direction);
-        if (direction == 1 && active_v < v_table - 1 && map[active_h][active_v + 1] == 0) {
-            map[active_h][active_v++] = 0;
-            map[active_h][active_v] = 1;
-        }
-        if (direction == 2 && active_h > 0 && map[active_h - 1][active_v] == 0) {
-            map[active_h--][active_v] = 0;
-            map[active_h][active_v] = 1;
-        }
-        if (direction == 3 && active_v > 0 && map[active_h][active_v - 1] == 0) {
-            map[active_h][active_v--] = 0;
-            map[active_h][active_v] = 1;
-        }
-        if (direction == 4 && active_h < h_table - 1 && map[active_h + 1][active_v] == 0) {
-            map[active_h++][active_v] = 0;
-            map[active_h][active_v] = 1;
+
+        if (iteration == 1) {
+            if (direction == 1) {
+                if (!(active_v_compare < v_table - 1 && map[active_h_compare][active_v_compare + 1] == 0)) {
+                    return false;
+                }
+                active_v += 0.02;
+                active_player.set_v_compare(++active_v_compare);
+            }
+            if (direction == 2) {
+                if (!(active_h_compare > 0 && map[active_h_compare - 1][active_v_compare] == 0)) {
+                    return false;
+                }
+                active_h -= 0.02;
+                active_player.set_h_compare(--active_h_compare);
+            }
+            if (direction == 3) {
+                if (!(active_v_compare > 0 && map[active_h_compare][active_v_compare - 1] == 0)) {
+                    return false;
+                }
+                active_v -= 0.02;
+                active_player.set_v_compare(--active_v_compare);
+            }
+            if (direction == 4) {
+                if (!(active_h_compare < h_table - 1 && map[active_h_compare + 1][active_v_compare] == 0)) {
+                    return false;
+                }
+                active_h += 0.02;
+                active_player.set_h_compare(++active_h_compare);
+            }
+        } else {
+            if (direction == 1) {
+                active_v += 0.02;
+            }
+            if (direction == 2) {
+                active_h -= 0.02;
+            }
+            if (direction == 3) {
+                active_v -= 0.02;
+            }
+            if (direction == 4) {
+                active_h += 0.02;
+            }
         }
         active_player.set_h(active_h);
         active_player.set_v(active_v);
+        return true;
     }
 
     [[nodiscard]] player &get_player() {
@@ -506,13 +584,17 @@ public:
         return teachers;
     }
 
+    [[nodiscard]] std::vector<std::vector<int>> &get_map() {
+        return map;
+    }
+
     [[nodiscard]] std::vector<item> &get_displayed_items() {
         return displayed_items;
     }
 
     void draw(sf::RenderTarget& target, sf::RenderStates states) const override {
-        int active_v = active_player.get_v();
-        int active_h = active_player.get_h();
+        double active_v = active_player.get_v();
+        double active_h = active_player.get_h();
 
         states.transform *= getTransform();
 
@@ -600,6 +682,22 @@ public:
                                    displayed_items[0].get_h() * (cell_h_size));
         item_shape.setPosition(item_position);
 
+        sf::RectangleShape menu_button(sf::Vector2f(100, 40));
+        menu_button.setFillColor(sf::Color::White);
+        sf::Vector2f menu_button_position(active_v * (cell_v_size) - 570,
+                                          active_h * (cell_h_size) - 290);
+        menu_button.setPosition(menu_button_position);
+        menu_button.setOutlineThickness(2.f);
+        menu_button.setOutlineColor(sf::Color(73, 103, 113));
+
+        sf::Text menu_text;
+        menu_text.setFont(text_font);
+        menu_text.setString(" Menu");
+        menu_text.setCharacterSize(30);
+        menu_text.setFillColor(sf::Color::Black);
+        menu_text.setStyle(sf::Text::Italic);
+        menu_text.setPosition(menu_button_position);
+
         sf::Text player_text;
         player_text.setFont(text_font);
         player_text.setString(active_player.get_name());
@@ -640,6 +738,8 @@ public:
         if (displayed_items[0].get_displayed()) {
             target.draw(item_shape, states);
         }
+        target.draw(menu_button, states);
+        target.draw(menu_text, states);
     }
 };
 }  //namespace university_game
