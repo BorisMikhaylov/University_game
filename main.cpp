@@ -9,7 +9,7 @@ int main() {
     standard_view.setCenter(640, 360);
 
     sf::Font text_font;
-    text_font.loadFromFile("C:/Users/bonda/cppgame/University_game/fonts/arial.ttf");
+    text_font.loadFromFile("/Users/borismikhaylov/CLionProjects/University_game/fonts/arial.ttf");
 
     sf::Text head_text;
     head_text.setFont(text_font);
@@ -111,6 +111,8 @@ int main() {
                                        {"Hey!",
                                         "I've heard that you're a trickster now.",
                                         "Good job! See you later."}, second_quest.get_name());
+
+    university_game::minigame_bugs mg_bugs;
 
     university_game::game my_game(&window, text_font, player_1);
     my_game.setPosition(40.f, 40.f);
