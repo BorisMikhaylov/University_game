@@ -5,11 +5,11 @@ int main() {
     sf::RenderWindow window(sf::VideoMode(1280, 720), "University game");
 
     sf::View standard_view(sf::FloatRect(0, 0,
-                                window.getSize().x, window.getSize().y));
+                                         window.getSize().x, window.getSize().y));
     standard_view.setCenter(640, 360);
 
     sf::Font text_font;
-    text_font.loadFromFile("/Users/borismikhaylov/CLionProjects/University_game/fonts/arial.ttf");
+    text_font.loadFromFile("/Users/borismikhaylov/CLionProjects/University_game/fonts/arial1.ttf");
 
     sf::Text head_text;
     head_text.setFont(text_font);
@@ -92,7 +92,7 @@ int main() {
     university_game::item first_required("algebra book", "you need this for 'Trickster' \nquest", 10, 2);
     university_game::item first_award("well-rated assignment", "you've completed 'Trickster', \nhooray!", 0, 0);
     university_game::quest first_quest("Trickster", "Go to Mr. Antipoff and try to get a \ngood mark "
-                                        "in algebra without doing it.", 1,
+                                                    "in algebra without doing it.", 1,
                                        first_required, first_award);
     university_game::quest second_quest("Talkative friend", "Have a little chat with Mr. Khrabroff.", 2,
                                         university_game::item("none", "", 0, 0),
@@ -105,24 +105,27 @@ int main() {
     std::vector<university_game::item> initial_items{};
     university_game::player player_1("You", initial_quests, initial_items);
     university_game::teacher teacher_1("Mr. Antipoff", 2, 1, 1,
-                             {"Hey! Wanna mark? Bring me my algebra book.",
-                              "Did you actually find it?", "Alright, here we go."}, first_quest.get_name());
+                                       {"Hey! Wanna mark? Bring me my algebra book.",
+                                        "Did you actually find it?", "Alright, here we go."}, first_quest.get_name());
     university_game::teacher teacher_2("Mr. Khrabroff", 3, 12, 5,
                                        {"Hey!",
                                         "I've heard that you're a trickster now.",
                                         "Good job! See you later."}, second_quest.get_name());
 
-    university_game::minigame_bugs mg_bugs;
-
     university_game::game my_game(&window, text_font, player_1);
     my_game.setPosition(40.f, 40.f);
+
+    university_game::minigame_bugs mg_bugs;
 
     bool game_started = false;
     bool settings_opened = false;
     bool inventory_and_quests_opened = false;
     bool teacher_speaking = false;
+    bool bugs_game_started = false;
     int executing_id = 0;
     int id = 0;
+    static bool lock_click;
+    std::srand(std::time(nullptr));
 
     while (window.isOpen()) {
         if (game_started) {
@@ -185,6 +188,40 @@ int main() {
                         }
                         my_game.take_item_if_possible();
                     }
+                    if (event.key.code == sf::Keyboard::M && !bugs_game_started) {
+                        bugs_game_started = true;
+                        mg_bugs.add_bug();
+                    }
+                    if (event.key.code == sf::Keyboard::M && bugs_game_started){
+                        bugs_game_started = false;
+                    }
+                    if (bugs_game_started) {
+                        if (mg_bugs.count_bugs <= 0) {
+                            bugs_game_started = false;
+                        }
+                        if (event.type == sf::Event::MouseButtonPressed) {
+                            if (event.mouseButton.button == sf::Mouse::Left && !lock_click) {
+                                int mouse_pos_x = sf::Mouse::getPosition(window).x;
+                                int mouse_pos_y = sf::Mouse::getPosition(window).y;
+                                for (int ids_bugs: mg_bugs.bugs_id) {
+                                    university_game::bug cur_bug = mg_bugs.id_bug[ids_bugs];
+                                    if (std::abs(mouse_pos_x - cur_bug.active_x) <= 5 &&
+                                        std::abs(mouse_pos_y - cur_bug.active_y) <= 5) {
+                                        mg_bugs.remove_bug(ids_bugs);
+                                    }
+                                }
+                                lock_click = true;
+                            }
+                        }
+                        if (event.type == sf::Event::MouseButtonReleased) {
+                            if (event.mouseButton.button == sf::Mouse::Left) {
+                                lock_click = false;
+                            }
+                        }
+                        if (rand() % 100 == 50) {
+                            mg_bugs.add_bug();
+                        }
+                    }
                     if (event.key.code == sf::Keyboard::E && !inventory_and_quests_opened) {
                         inventory_and_quests_opened = true;
                     } else if (event.key.code == sf::Keyboard::E && inventory_and_quests_opened) {
@@ -203,6 +240,9 @@ int main() {
             }
             if (game_started) {
                 window.clear();
+                if (bugs_game_started){
+                    window.draw(mg_bugs);
+                }
                 window.draw(my_game);
                 if (inventory_and_quests_opened) {
                     window.draw(my_game.get_player());
@@ -216,6 +256,9 @@ int main() {
                     }
                     teacher_speaking = false;
                     my_game.get_teachers()[id - 2].satisfy_quest(my_game.get_player());
+                }
+                if (bugs_game_started){
+                    window.draw(mg_bugs);
                 }
                 window.display();
             }
