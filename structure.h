@@ -10,7 +10,16 @@
 #include <SFML/Graphics/Texture.hpp>
 
 namespace university_game {
-const int v_table = 14;
+
+#if defined (_WIN64)
+    const std::string prefix = "C:/Users/bonda/cppgame/University_game";
+#endif
+
+#if defined (__linux__)
+    const std::string prefix = "";
+#endif
+
+const int v_table = 28;
 const int h_table = 6;
 const int cell_v_size = 90;
 const int cell_h_size = 125;
@@ -41,7 +50,7 @@ public:
     }
 
     [[nodiscard]] std::string get_info() const {
-        return "Name: " + get_name() + "\nUsage: " + get_usage() + ".\n\n";
+        return "Name: " + get_name() + "\nUsage: " + get_usage() + "\n\n";
     }
 
     [[nodiscard]] int get_v() const {
@@ -138,6 +147,7 @@ private:
     int active_h_compare = h_table / 2;
     std::string quest_taken;
     int direction = 4;
+    int graphic_phase = 0;
 
 public:
     player() = default;
@@ -194,6 +204,14 @@ public:
 
     [[nodiscard]] int get_direction() const {
         return direction;
+    }
+
+    [[nodiscard]] int get_graphic_phase() const {
+        return graphic_phase;
+    }
+
+    void set_graphic_phase(int new_graphic_phase) {
+        graphic_phase = new_graphic_phase;
     }
 
     void set_direction(int new_direction) {
@@ -279,7 +297,7 @@ public:
         split_shape.setPosition(active_v * (cell_v_size) + 100, active_h * (cell_h_size) - 130);
 
         sf::Font text_font;
-        text_font.loadFromFile("C:/Users/bonda/cppgame/University_game/fonts/arial.ttf");
+        text_font.loadFromFile(prefix + "/fonts/arial.ttf");
 
         sf::Text quest_text;
         quest_text.setFont(text_font);
@@ -439,7 +457,7 @@ public:
         frame_shape.setPosition(active_v * (cell_v_size) - 250, active_h * (cell_h_size) - 50);
 
         sf::Font text_font;
-        text_font.loadFromFile("C:/Users/bonda/cppgame/University_game/fonts/arial.ttf");
+        text_font.loadFromFile(prefix + "/fonts/arial.ttf");
 
         sf::Text quest_text;
         quest_text.setFont(text_font);
@@ -476,14 +494,14 @@ public:
         for (auto &line : map) {
             line.resize(v_table);
         }
-        teachers.resize(2);
-        displayed_items.resize(1);
-        map = {{0, 0, 0, 0, 0, -2, 0, 0, 0, 0, 0, 0, 0, 0},
-               {0, 2, 0, 0, 0, -2, 0, 0, 0, 0, 0, 0, 0, 0},
-               {0, 0, 0, 0, 0, -2, 0, 0, 0, 0, -1, 0, 0, 0},
-               {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-               {-2, -2, -2, -2, -2, -2, 0, 0, 0, 0, 0, 0, 0, 0},
-               {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0}};
+        teachers.resize(3);
+        displayed_items.resize(2);
+        map = {{0, 0, 0, 0, 0, -2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+               {0, 2, 0, 0, 0, -2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+               {0, 0, 0, 0, 0, -2, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, -2, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0},
+               {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -2, 0, 0, -2, -2, -2, 0, 0, 0, 0, 0},
+               {-2, -2, -2, -2, -2, -2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+               {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
     }
 
     [[nodiscard]] int check_presence_of_teacher() {
@@ -528,6 +546,10 @@ public:
         int active_h_compare = active_player.get_h_compare();
         active_player.set_direction(direction);
 
+        if (iteration % 10 == 0) {
+            active_player.set_graphic_phase((active_player.get_graphic_phase() + 1) % 2);
+        }
+
         if (iteration == 1) {
             if (direction == 1) {
                 if (!(active_v_compare < v_table - 1 && map[active_h_compare][active_v_compare + 1] == 0)) {
@@ -558,6 +580,9 @@ public:
                 active_player.set_h_compare(++active_h_compare);
             }
         } else {
+            if (iteration == 50) {
+                active_player.set_graphic_phase(0);
+            }
             if (direction == 1) {
                 active_v += 0.02;
             }
@@ -602,17 +627,17 @@ public:
         sf::Color outline_color = sf::Color(58, 0, 0);
 
         // Рисуем рамку игрового поля
-        sf::RectangleShape frame_shape(sf::Vector2f(1260, 750));
+        sf::RectangleShape frame_shape(sf::Vector2f(2520, 750));
         frame_shape.setFillColor(sf::Color::White);
         frame_shape.setOutlineThickness(20.f);
         frame_shape.setOutlineColor(outline_color);
         target.draw(frame_shape, states);
 
         sf::Texture walkable_field_texture;
-        walkable_field_texture.loadFromFile("C:/Users/bonda/cppgame/University_game/images/walkable_field.png");
+        walkable_field_texture.loadFromFile(prefix + "/images/walkable_field.png");
 
         sf::Texture unwalkable_field_texture;
-        unwalkable_field_texture.loadFromFile("C:/Users/bonda/cppgame/University_game/images/unwalkable_field.png");
+        unwalkable_field_texture.loadFromFile(prefix + "/images/unwalkable_field.png");
 
         // Подготавливаем рамку для отрисовки всех плашек
         sf::RectangleShape shape;
@@ -633,54 +658,97 @@ public:
             }
         }
         sf::Texture active_player_texture_front;
-        active_player_texture_front.loadFromFile("C:/Users/bonda/cppgame/University_game/images/player_default.png");
+        active_player_texture_front.loadFromFile(prefix + "/images/player_default.png");
 
         sf::Texture active_player_texture_right;
-        active_player_texture_right.loadFromFile("C:/Users/bonda/cppgame/University_game/images/player_default_right.png");
+        active_player_texture_right.loadFromFile(prefix + "/images/player_default_right.png");
 
         sf::Texture active_player_texture_left;
-        active_player_texture_left.loadFromFile("C:/Users/bonda/cppgame/University_game/images/player_default_left.png");
+        active_player_texture_left.loadFromFile(prefix + "/images/player_default_left.png");
 
         sf::Texture active_player_texture_back;
-        active_player_texture_back.loadFromFile("C:/Users/bonda/cppgame/University_game/images/player_default_back.png");
+        active_player_texture_back.loadFromFile(prefix + "/images/player_default_back.png");
 
-        sf::Texture teacher_texture;
-        teacher_texture.loadFromFile("C:/Users/bonda/cppgame/University_game/images/teacher_default.png");
+        sf::Texture active_player_texture_front_moving;
+        active_player_texture_front_moving.loadFromFile(prefix + "/images/player_default_moving.png");
 
-        sf::Texture item_texture;
-        item_texture.loadFromFile("C:/Users/bonda/cppgame/University_game/images/item_default.png");
+        sf::Texture active_player_texture_right_moving;
+        active_player_texture_right_moving.loadFromFile(prefix + "/images/player_default_right_moving.png");
+
+        sf::Texture active_player_texture_left_moving;
+        active_player_texture_left_moving.loadFromFile(prefix + "/images/player_default_left_moving.png");
+
+        sf::Texture active_player_texture_back_moving;
+        active_player_texture_back_moving.loadFromFile(prefix + "/images/player_default_back_moving.png");
+
+        sf::Texture teacher1_texture;
+        teacher1_texture.loadFromFile(prefix + "/images/teacher_default.png");
+
+        sf::Texture teacher2_texture;
+        teacher2_texture.loadFromFile(prefix + "/images/teacher_khrabroff.png");
+
+        sf::Texture teacher3_texture;
+        teacher3_texture.loadFromFile(prefix + "/images/teacher_pashok.png");
+
+        sf::Texture item1_texture;
+        item1_texture.loadFromFile(prefix + "/images/item_default.png");
 
         sf::RectangleShape active_player_shape(sf::Vector2f(cell_v_size, cell_h_size));
-        if (active_player.get_direction() == 1) {
-            active_player_shape.setTexture(&active_player_texture_right);
-        } else if (active_player.get_direction() == 2) {
-            active_player_shape.setTexture(&active_player_texture_back);
-        } else if (active_player.get_direction() == 3) {
-            active_player_shape.setTexture(&active_player_texture_left);
-        } else if (active_player.get_direction() == 4) {
-            active_player_shape.setTexture(&active_player_texture_front);
+        if (active_player.get_graphic_phase() == 0) {
+            if (active_player.get_direction() == 1) {
+                active_player_shape.setTexture(&active_player_texture_right);
+            } else if (active_player.get_direction() == 2) {
+                active_player_shape.setTexture(&active_player_texture_back);
+            } else if (active_player.get_direction() == 3) {
+                active_player_shape.setTexture(&active_player_texture_left);
+            } else if (active_player.get_direction() == 4) {
+                active_player_shape.setTexture(&active_player_texture_front);
+            }
+        } else {
+            if (active_player.get_direction() == 1) {
+                active_player_shape.setTexture(&active_player_texture_right_moving);
+            } else if (active_player.get_direction() == 2) {
+                active_player_shape.setTexture(&active_player_texture_back_moving);
+            } else if (active_player.get_direction() == 3) {
+                active_player_shape.setTexture(&active_player_texture_left_moving);
+            } else if (active_player.get_direction() == 4) {
+                active_player_shape.setTexture(&active_player_texture_front_moving);
+            }
         }
+
         sf::Vector2f active_player_position(active_v * (cell_v_size),
                                             active_h * (cell_h_size));
         active_player_shape.setPosition(active_player_position);
 
         sf::RectangleShape teacher1_shape(sf::Vector2f(cell_v_size, cell_h_size));
-        teacher1_shape.setTexture(&teacher_texture);
+        teacher1_shape.setTexture(&teacher1_texture);
         sf::Vector2f teacher1_position(teachers[0].get_v() * (cell_v_size),
                                       teachers[0].get_h() * (cell_h_size));
         teacher1_shape.setPosition(teacher1_position);
 
         sf::RectangleShape teacher2_shape(sf::Vector2f(cell_v_size, cell_h_size));
-        teacher2_shape.setTexture(&teacher_texture);
+        teacher2_shape.setTexture(&teacher2_texture);
         sf::Vector2f teacher2_position(teachers[1].get_v() * (cell_v_size),
                                        teachers[1].get_h() * (cell_h_size));
         teacher2_shape.setPosition(teacher2_position);
 
-        sf::RectangleShape item_shape(sf::Vector2f(cell_v_size, cell_h_size));
-        item_shape.setTexture(&item_texture);
-        sf::Vector2f item_position(displayed_items[0].get_v() * (cell_v_size),
+        sf::RectangleShape teacher3_shape(sf::Vector2f(cell_v_size, cell_h_size));
+        teacher3_shape.setTexture(&teacher3_texture);
+        sf::Vector2f teacher3_position(teachers[2].get_v() * (cell_v_size),
+                                       teachers[2].get_h() * (cell_h_size));
+        teacher3_shape.setPosition(teacher3_position);
+
+        sf::RectangleShape item1_shape(sf::Vector2f(cell_v_size, cell_h_size));
+        item1_shape.setTexture(&item1_texture);
+        sf::Vector2f item1_position(displayed_items[0].get_v() * (cell_v_size),
                                    displayed_items[0].get_h() * (cell_h_size));
-        item_shape.setPosition(item_position);
+        item1_shape.setPosition(item1_position);
+
+        sf::RectangleShape item2_shape(sf::Vector2f(cell_v_size, cell_h_size));
+        item2_shape.setTexture(&unwalkable_field_texture);
+        sf::Vector2f item2_position(displayed_items[1].get_v() * (cell_v_size),
+                                    displayed_items[1].get_h() * (cell_h_size));
+        item2_shape.setPosition(item2_position);
 
         sf::RectangleShape menu_button(sf::Vector2f(100, 40));
         menu_button.setFillColor(sf::Color::White);
@@ -722,6 +790,14 @@ public:
         teacher2_text.setStyle(sf::Text::Italic);
         teacher2_text.setPosition(teacher2_position);
 
+        sf::Text teacher3_text;
+        teacher3_text.setFont(text_font);
+        teacher3_text.setString(teachers[2].get_name());
+        teacher3_text.setCharacterSize(20);
+        teacher3_text.setFillColor(sf::Color::Red);
+        teacher3_text.setStyle(sf::Text::Italic);
+        teacher3_text.setPosition(teacher3_position);
+
         sf::Vector2f active_view_position(active_v * (cell_v_size) + 100,
                                           active_h * (cell_h_size) + 100);
         sf::View player_view(sf::FloatRect(0, 0,
@@ -735,8 +811,13 @@ public:
         target.draw(teacher1_text, states);
         target.draw(teacher2_shape, states);
         target.draw(teacher2_text, states);
+        target.draw(teacher3_shape, states);
+        target.draw(teacher3_text, states);
         if (displayed_items[0].get_displayed()) {
-            target.draw(item_shape, states);
+            target.draw(item1_shape, states);
+        }
+        if (displayed_items[1].get_displayed()) {
+            target.draw(item2_shape, states);
         }
         target.draw(menu_button, states);
         target.draw(menu_text, states);

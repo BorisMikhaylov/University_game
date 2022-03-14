@@ -2,6 +2,7 @@
 #include "structure.h"
 
 int main() {
+    std::string prefix = university_game::prefix;
     sf::RenderWindow window(sf::VideoMode(1280, 720), "University game");
 
     sf::View standard_view(sf::FloatRect(0, 0,
@@ -9,7 +10,7 @@ int main() {
     standard_view.setCenter(640, 360);
 
     sf::Font text_font;
-    text_font.loadFromFile("C:/Users/bonda/cppgame/University_game/fonts/arial.ttf");
+    text_font.loadFromFile(prefix + "/fonts/arial.ttf");
 
     sf::Text head_text;
     head_text.setFont(text_font);
@@ -69,7 +70,8 @@ int main() {
     settings_main_text.setString("Keyboard bindings: \n\n"
                                  "~ Interact with objects/characters:        X\n"
                                  "~ Open/close inventory/list of quests:   E\n"
-                                 "~ Leave game:                                       ESC\n");
+                                 "~ Leave game:                                       ESC\n"
+                                 "~ Move player:                                       Arrow keys\n");
     settings_main_text.setCharacterSize(25);
     settings_main_text.setFillColor(sf::Color::Cyan);
     settings_main_text.setPosition(50, 195);
@@ -91,17 +93,17 @@ int main() {
 
     university_game::item first_required("algebra book", "you need this for 'Trickster' \nquest", 10, 2);
     university_game::item first_award("well-rated assignment", "you've completed 'Trickster', \nhooray!", 0, 0);
+    university_game::item third_required("100$ banknote", "give it back to Pashok", 17, 1);
+    university_game::item third_award("weirdo certificate", "you're officially a weirdo now.", 0, 0);
     university_game::quest first_quest("Trickster", "Go to Mr. Antipoff and try to get a \ngood mark "
                                         "in algebra without doing it.", 1,
                                        first_required, first_award);
     university_game::quest second_quest("Talkative friend", "Have a little chat with Mr. Khrabroff.", 2,
                                         university_game::item("none", "", 0, 0),
                                         university_game::item("none", "", 0, 0));
-    /*university_game::quest third_quest("third_quest", "3rd description", 1,
-                                        university_game::item("", "", 0, 0),
-                                        university_game::item("", "", 0, 0));
-    third_quest.mark_as_completed();*/
-    std::vector<university_game::quest> initial_quests = {first_quest, second_quest};
+    university_game::quest third_quest("BONUS: Weirdo", "Find your friend Pashok and \nfollow his instructions", 3,
+                                       third_required,third_award);
+    std::vector<university_game::quest> initial_quests = {first_quest, second_quest, third_quest};
     std::vector<university_game::item> initial_items{};
     university_game::player player_1("You", initial_quests, initial_items);
     university_game::teacher teacher_1("Mr. Antipoff", 2, 1, 1,
@@ -111,6 +113,10 @@ int main() {
                                        {"Hey!",
                                         "I've heard that you're a trickster now.",
                                         "Good job! See you later."}, second_quest.get_name());
+    university_game::teacher teacher_3("Pashok", 4, 22, 2,
+                                       {"Yo! Find a wall, where I've hidden money.",
+                                        "You've found it, right?",
+                                        "Thank you, man. Appreciate that."}, third_quest.get_name());
 
     university_game::game my_game(&window, text_font, player_1);
     my_game.setPosition(40.f, 40.f);
@@ -240,8 +246,11 @@ int main() {
 
                         my_game.get_teachers()[0] = teacher_1;
                         my_game.get_teachers()[1] = teacher_2;
+                        my_game.get_teachers()[2] = teacher_3;
                         first_required.set_displayed(true);
                         my_game.get_displayed_items()[0] = first_required;
+                        third_required.set_displayed(true);
+                        my_game.get_displayed_items()[1] = third_required;
                     }
                     if (event.mouseButton.x > 490 && event.mouseButton.x < 790
                         && event.mouseButton.y > 295 && event.mouseButton.y < 345 && !settings_opened) {
