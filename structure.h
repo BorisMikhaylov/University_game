@@ -460,10 +460,8 @@ namespace university_game {
         }
     };
 
-    struct bug : public sf::Drawable, public sf::Transformable {
-    private:
-        int id{};
-    public:
+    struct bug {
+        int id;
         int active_x;
         int active_y;
 
@@ -473,24 +471,11 @@ namespace university_game {
             return id;
         }
 
-        void create() {
+        void create(int new_id) {
             std::srand(std::time(nullptr));
-            active_x = std::rand();
-            active_y = std::rand();
-        }
-
-        std::pair<int, int> get_coordinates() {
-            return std::make_pair(active_x, active_y);
-        }
-
-        void draw(sf::RenderTarget &target, sf::RenderStates states) const override {
-            states.transform *= getTransform();
-
-            sf::Texture bug_texture;
-            bug_texture.loadFromFile("/Users/borismikhaylov/CLionProjects/University_game/images/bug.png");
-            sf::RectangleShape frame_shape(sf::Vector2f(42, 40));
-            frame_shape.setPosition(active_x * cell_h_size, active_y * cell_v_size);
-            target.draw(frame_shape, states);
+            active_x = std::rand() % 50;
+            active_y = std::rand() % 50;
+            id=new_id;
         }
 
         virtual ~bug() = default;
@@ -498,39 +483,30 @@ namespace university_game {
 
     struct minigame_bugs : public sf::Drawable, public sf::Transformable {
 
-        std::map<int, bug> id_bug;
         int count_bugs = 0;
+        int all_ids=0;
+        std::map<int, bug> id_bug;
         std::set<int> bugs_id;
         int map_width = 40;
         int map_height = 40;
 
         minigame_bugs() = default;
 
-        void start() {
-
-        }
-
         void add_bug() {
-            bug new_bug{};
-            new_bug.create();
+            bug new_bug;
+            new_bug.create(all_ids++);
             bugs_id.insert(new_bug.get_id());
             id_bug[new_bug.get_id()] = new_bug;
             count_bugs++;
         }
 
         void remove_bug(int cur_bug_id) {
-            if (count_bugs <= 0) std::cerr << "You can't remove bug: there's no bugs left!"; //need stfl output
             id_bug.erase(cur_bug_id);
             bugs_id.erase(cur_bug_id);
             count_bugs--;
         }
 
-        int get_number_of_bugs() const {
-            return count_bugs;
-        }
-
         void move_bug(int bug_id) {
-            bug *cur_bug = &id_bug[bug_id];
             std::vector<std::pair<int, int>> moves{{0,  1},
                                                    {1,  0},
                                                    {-1, 0},
@@ -538,31 +514,16 @@ namespace university_game {
             std::srand(std::time(nullptr));
             for (int i = 0; i < 10; ++i) {
                 int direction = std::rand() % 4;
-                if (cur_bug->active_x + moves[direction].first > 0 &&
-                    cur_bug->active_x + moves[direction].first < map_height &&
-                    cur_bug->active_y + moves[direction].second > 0 &&
-                    cur_bug->active_y + moves[direction].second < map_width) {
-                    cur_bug->active_x += moves[direction].first;
-                    cur_bug->active_y += moves[direction].second;
+                if (id_bug[bug_id].active_x + moves[direction].first > 0 &&
+                    id_bug[bug_id].active_x + moves[direction].first < map_height &&
+                    id_bug[bug_id].active_y + moves[direction].second > 0 &&
+                    id_bug[bug_id].active_y + moves[direction].second < map_width) {
+                    id_bug[bug_id].active_x += moves[direction].first;
+                    id_bug[bug_id].active_y += moves[direction].second;
                     return;
                 }
             }
 
-        }
-
-        //returns -1 if bug not caught, otherwise gives id of caught bug
-        int click_bug(int pos_x, int pos_y) {
-            bool ans = false;
-            bug cur_bug;
-            for (int b: bugs_id) {
-                cur_bug = id_bug[b];
-                std::pair<int, int> coords = cur_bug.get_coordinates();
-                bool cur = coords.first == pos_x && coords.second == pos_y;
-                if (coords.first == pos_x && coords.second == pos_y) {
-                    return b;
-                }
-            }
-            return -1;
         }
 
         void draw(sf::RenderTarget &target, sf::RenderStates states) const override {
@@ -571,28 +532,33 @@ namespace university_game {
             sf::Color outline_color = sf::Color(73, 103, 113);
 
             sf::Texture mg_bugs_carpet_texture;
-            mg_bugs_carpet_texture.loadFromFile("/Users/borismikhaylov/CLionProjects/University_game/images/mg_bugs_carpet1.png");
+            mg_bugs_carpet_texture.loadFromFile(
+                    "/Users/borismikhaylov/CLionProjects/University_game/images/carpet_new2.png");
 
-            sf::RectangleShape mg_bug_field(sf::Vector2f(300, 100));
-            mg_bug_field.setFillColor(sf::Color::White);
-            mg_bug_field.setOutlineThickness(20.f);
-            mg_bug_field.setOutlineColor(outline_color);
-            target.draw(mg_bug_field, states);
-            sf::RectangleShape mg_bugs_carpet(sf::Vector2f(cell_h_size, cell_v_size));
+//            sf::RectangleShape mg_bug_field(sf::Vector2f(5000, 5000));
+//            mg_bug_field.setFillColor(sf::Color::White);
+//            mg_bug_field.setOutlineThickness(20.f);
+//            mg_bug_field.setOutlineColor(outline_color);
+//            target.draw(mg_bug_field, states);
+            int s = 40;
+            sf::RectangleShape mg_bugs_carpet(sf::Vector2f(cell_v_size * v_table, cell_h_size * h_table));
             mg_bugs_carpet.setTexture(&mg_bugs_carpet_texture);
-            for (int i = 0; i < map_height; ++i){
-                for (int j = 0; j < map_width; ++j){
-                    sf::Vector2f position(i * cell_h_size, j * cell_v_size);
-                    mg_bugs_carpet.setPosition(position);
-                    target.draw(mg_bugs_carpet, states);
-                }
-            }
-            sf::RectangleShape bug_shape(sf::Vector2f(42, 40));
-            bug_shape.setTexture(&mg_bugs_carpet_texture);
+            target.draw(mg_bugs_carpet, states);
+//            for (int i = 0; i < map_height; ++i) {
+//                for (int j = 0; j < map_width; ++j) {
+//                    sf::Vector2f position(i * s, j * s);
+//                    mg_bugs_carpet.setPosition(position);
+//                    target.draw(mg_bugs_carpet, states);
+//                }
+//            }
+            sf::Texture bug_texture;
+            bug_texture.loadFromFile("/Users/borismikhaylov/CLionProjects/University_game/images/bug.png");
+            sf::RectangleShape bug_shape(sf::Vector2f(500, 500));
+            bug_shape.setTexture(&bug_texture);
             bug cur_bug;
-            for (int b : bugs_id){
-                cur_bug = id_bug.at(b);
-                sf::Vector2f position(cur_bug.active_x, cur_bug.active_y);
+            for (int b: bugs_id) {
+                //cur_bug = id_bug.at(b);
+                sf::Vector2f position(id_bug.at(b).active_x * cell_h_size, id_bug.at(b).active_y * cell_v_size);
                 bug_shape.setPosition(position);
                 target.draw(bug_shape, states);
             }

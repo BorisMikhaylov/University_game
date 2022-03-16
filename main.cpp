@@ -138,6 +138,49 @@ int main() {
                     if (event.key.code == sf::Keyboard::Escape) {
                         window.close();
                     }
+                    if (event.key.code == sf::Keyboard::M && !bugs_game_started) {                                 //MINIGAME
+                        bugs_game_started = true;
+                        mg_bugs.add_bug();
+                        mg_bugs.add_bug();
+                        mg_bugs.add_bug();
+                        mg_bugs.add_bug();
+                        mg_bugs.add_bug();
+                        mg_bugs.add_bug();
+                        mg_bugs.add_bug();
+                        mg_bugs.add_bug();
+                        mg_bugs.add_bug();
+                    } else if (event.key.code == sf::Keyboard::M && bugs_game_started){
+                        bugs_game_started = false;
+                    }
+                    if (bugs_game_started) {
+                        if (mg_bugs.count_bugs <= 0) {
+                            bugs_game_started = false;
+                            continue;
+                        }
+                        if (event.type == sf::Event::MouseButtonPressed) {
+                            if (event.mouseButton.button == sf::Mouse::Left && !lock_click) {
+                                int mouse_pos_x = sf::Mouse::getPosition(window).x;
+                                int mouse_pos_y = sf::Mouse::getPosition(window).y;
+                                for (int ids_bugs: mg_bugs.bugs_id) {
+                                    university_game::bug cur_bug = mg_bugs.id_bug[ids_bugs];
+                                    if (std::abs(mouse_pos_x - cur_bug.active_x) <= 5 &&
+                                        std::abs(mouse_pos_y - cur_bug.active_y) <= 5) {
+                                        mg_bugs.remove_bug(ids_bugs);
+                                    }
+                                }
+                                lock_click = true;
+                            }
+                        }
+                        if (event.type == sf::Event::MouseButtonReleased) {
+                            if (event.mouseButton.button == sf::Mouse::Left) {
+                                lock_click = false;
+                            }
+                        }
+                        if (rand() % 100 == 50) {
+                            mg_bugs.add_bug();
+                        }
+                        continue;
+                    }
                     if (event.key.code == sf::Keyboard::Right && !inventory_and_quests_opened) {
                         for (int i = 1; i < 51; i++) {
                             if (!my_game.move(1, i)) {
@@ -188,40 +231,6 @@ int main() {
                         }
                         my_game.take_item_if_possible();
                     }
-                    if (event.key.code == sf::Keyboard::M && !bugs_game_started) {
-                        bugs_game_started = true;
-                        mg_bugs.add_bug();
-                    }
-                    if (event.key.code == sf::Keyboard::M && bugs_game_started){
-                        bugs_game_started = false;
-                    }
-                    if (bugs_game_started) {
-                        if (mg_bugs.count_bugs <= 0) {
-                            bugs_game_started = false;
-                        }
-                        if (event.type == sf::Event::MouseButtonPressed) {
-                            if (event.mouseButton.button == sf::Mouse::Left && !lock_click) {
-                                int mouse_pos_x = sf::Mouse::getPosition(window).x;
-                                int mouse_pos_y = sf::Mouse::getPosition(window).y;
-                                for (int ids_bugs: mg_bugs.bugs_id) {
-                                    university_game::bug cur_bug = mg_bugs.id_bug[ids_bugs];
-                                    if (std::abs(mouse_pos_x - cur_bug.active_x) <= 5 &&
-                                        std::abs(mouse_pos_y - cur_bug.active_y) <= 5) {
-                                        mg_bugs.remove_bug(ids_bugs);
-                                    }
-                                }
-                                lock_click = true;
-                            }
-                        }
-                        if (event.type == sf::Event::MouseButtonReleased) {
-                            if (event.mouseButton.button == sf::Mouse::Left) {
-                                lock_click = false;
-                            }
-                        }
-                        if (rand() % 100 == 50) {
-                            mg_bugs.add_bug();
-                        }
-                    }
                     if (event.key.code == sf::Keyboard::E && !inventory_and_quests_opened) {
                         inventory_and_quests_opened = true;
                     } else if (event.key.code == sf::Keyboard::E && inventory_and_quests_opened) {
@@ -242,6 +251,8 @@ int main() {
                 window.clear();
                 if (bugs_game_started){
                     window.draw(mg_bugs);
+                    window.display();
+                    continue;
                 }
                 window.draw(my_game);
                 if (inventory_and_quests_opened) {
@@ -256,9 +267,6 @@ int main() {
                     }
                     teacher_speaking = false;
                     my_game.get_teachers()[id - 2].satisfy_quest(my_game.get_player());
-                }
-                if (bugs_game_started){
-                    window.draw(mg_bugs);
                 }
                 window.display();
             }
