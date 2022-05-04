@@ -9,7 +9,7 @@ int main() {
     standard_view.setCenter(640, 360);
 
     sf::Font text_font;
-    text_font.loadFromFile("/Users/borismikhaylov/CLionProjects/University_game/fonts/arial1.ttf");
+    text_font.loadFromFile("C:/Users/Serge/CLionProjects/University_game/fonts/arial.ttf");
 
     sf::Text head_text;
     head_text.setFont(text_font);
@@ -69,6 +69,7 @@ int main() {
     settings_main_text.setString("Keyboard bindings: \n\n"
                                  "~ Interact with objects/characters:        X\n"
                                  "~ Open/close inventory/list of quests:   E\n"
+                                 "~ Start/end sudoku game:  S\n"
                                  "~ Leave game:                                       ESC\n");
     settings_main_text.setCharacterSize(25);
     settings_main_text.setFillColor(sf::Color::Cyan);
@@ -88,6 +89,18 @@ int main() {
     settings_back_button_shape.setOutlineThickness(3.f);
     settings_back_button_shape.setFillColor(sf::Color::Transparent);
     settings_back_button_shape.setOutlineColor(sf::Color::Cyan);
+
+    sf::RectangleShape victory_shape(sf::Vector2f(450, 50));
+    victory_shape.setOutlineThickness(3.f);
+    victory_shape.setFillColor(sf::Color::White);
+    victory_shape.setOutlineColor(sf::Color::Cyan);
+
+    sf::Text victory_text;
+    victory_text.setFont(text_font);
+    victory_text.setString("CONGRATULATIONS!");
+    victory_text.setCharacterSize(40);
+    victory_text.setFillColor(sf::Color::Red);
+    victory_text.setStyle(sf::Text::Bold);
 
     university_game::item first_required("algebra book", "you need this for 'Trickster' \nquest", 10, 2);
     university_game::item first_award("well-rated assignment", "you've completed 'Trickster', \nhooray!", 0, 0);
@@ -116,12 +129,15 @@ int main() {
     my_game.setPosition(40.f, 40.f);
 
     university_game::minigame_bugs mg_bugs;
+    university_game::sudoku_game sudoku;
 
     bool game_started = false;
     bool settings_opened = false;
     bool inventory_and_quests_opened = false;
     bool teacher_speaking = false;
     bool bugs_game_started = false;
+    bool sudoku_started = false;
+    bool sudoku_victory = false;
     int executing_id = 0;
     int id = 0;
     static bool lock_click;
@@ -138,7 +154,7 @@ int main() {
                     if (event.key.code == sf::Keyboard::Escape) {
                         window.close();
                     }
-                    if (event.key.code == sf::Keyboard::M && !bugs_game_started) {                                 //MINIGAME
+                    if (event.key.code == sf::Keyboard::M && !bugs_game_started && !sudoku_started) {                                 //MINIGAME
                         bugs_game_started = true;
                         mg_bugs.add_bug();
                         mg_bugs.add_bug();
@@ -151,6 +167,13 @@ int main() {
                         mg_bugs.add_bug();
                     } else if (event.key.code == sf::Keyboard::M && bugs_game_started){
                         bugs_game_started = false;
+                    }
+                    if (event.key.code == sf::Keyboard::S && !bugs_game_started &&
+                        !sudoku_started && !inventory_and_quests_opened) {
+                        sudoku_started = true;
+                        sudoku.new_sudoku(my_game.get_player().get_v_compare(), my_game.get_player().get_h_compare());
+                    } else if (event.key.code == sf::Keyboard::S && sudoku_started) {
+                        sudoku_started = false;
                     }
                     if (bugs_game_started) {
                         if (mg_bugs.count_bugs <= 0) {
@@ -178,6 +201,66 @@ int main() {
                         }
                         if (rand() % 100 == 50) {
                             mg_bugs.add_bug();
+                        }
+                        continue;
+                    }
+                    if (sudoku_started) {
+                        if (event.key.code == sf::Keyboard::Num1) {
+                            if (sudoku.set_value(1)) {
+                                sudoku_started = false;
+                                sudoku_victory = true;
+                            }
+                        }
+                        if (event.key.code == sf::Keyboard::Num2) {
+                            if (sudoku.set_value(2)) {
+                                sudoku_started = false;
+                                sudoku_victory = true;
+                            }
+                        }
+                        if (event.key.code == sf::Keyboard::Num3) {
+                            if (sudoku.set_value(3)) {
+                                sudoku_started = false;
+                                sudoku_victory = true;
+                            }
+                        }
+                        if (event.key.code == sf::Keyboard::Num4) {
+                            if (sudoku.set_value(4)) {
+                                sudoku_started = false;
+                                sudoku_victory = true;
+                            }
+                        }
+                        if (event.key.code == sf::Keyboard::Num5) {
+                            if (sudoku.set_value(5)) {
+                                sudoku_started = false;
+                                sudoku_victory = true;
+                            }
+                        }
+                        if (event.key.code == sf::Keyboard::Num6) {
+                            if (sudoku.set_value(6)) {
+                                sudoku_started = false;
+                                sudoku_victory = true;
+                            }
+                        }
+                        if (event.key.code == sf::Keyboard::Num7) {
+                            if (sudoku.set_value(7)) {
+                                sudoku_started = false;
+                                sudoku_victory = true;
+                            }
+                        }
+                        if (event.key.code == sf::Keyboard::Num8) {
+                            if (sudoku.set_value(8)) {
+                                sudoku_started = false;
+                                sudoku_victory = true;
+                            }
+                        }
+                        if (event.key.code == sf::Keyboard::Num9) {
+                            if (sudoku.set_value(9)) {
+                                sudoku_started = false;
+                                sudoku_victory = true;
+                            }
+                        }
+                        if (event.key.code == sf::Keyboard::BackSpace) {
+                            sudoku.set_value(-1);
                         }
                         continue;
                     }
@@ -245,6 +328,13 @@ int main() {
                         game_started = false;
                         window.setView(standard_view);
                     }
+                    else if (sudoku_started) {
+                        int x_pressed = event.mouseButton.x - 314;
+                        int y_pressed = event.mouseButton.y - 34;
+                        x_pressed /= 50;
+                        y_pressed /= 50;
+                        sudoku.set_selected_cell(x_pressed, y_pressed);
+                    }
                 }
             }
             if (game_started) {
@@ -255,6 +345,26 @@ int main() {
                     continue;
                 }
                 window.draw(my_game);
+                if (sudoku_started) {
+                    window.draw(sudoku);
+                    window.display();
+                    continue;
+                }
+                if (sudoku_victory) {
+                    int x_draw_cord = my_game.get_player().get_v_compare() * university_game::cell_v_size - 100;
+                    int y_draw_cord = my_game.get_player().get_h_compare() * university_game::cell_h_size - 10;
+                    victory_text.setPosition(x_draw_cord, y_draw_cord);
+                    victory_shape.setPosition(x_draw_cord, y_draw_cord);
+                    window.draw(victory_shape);
+                    window.draw(victory_text);
+                    window.display();
+                    const sf::Time freezeLength{sf::seconds(3.f)};
+                    sf::Clock freezeClock;
+                    while (freezeClock.getElapsedTime() < freezeLength) {
+                    }
+                    sudoku_victory = false;
+                    continue; //somewhy it doesn't work
+                }
                 if (inventory_and_quests_opened) {
                     window.draw(my_game.get_player());
                 }
