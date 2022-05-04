@@ -1,0 +1,1 @@
+ { "quest_name" : "BONUS: Weirdo", "quest_description" : "Find your friend Pashok", "required_level" : 3, "required_item_name" : "100$ banknote", "required_item_usage" : "give it back to Pashok", "required_item_v" : 17, "required_item_h" : 1, "award_item_name" : "weirdo certificate", "award_item_usage" : "you're officially a weirdo now.", "award_item_v" : 0, "award_item_h" : 0 } 

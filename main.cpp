@@ -35,17 +35,32 @@ int main() {
     new_game_button_shape.setFillColor(sf::Color::Transparent);
     new_game_button_shape.setOutlineColor(sf::Color::Cyan);
 
+    sf::Text load_game_button_text;
+    load_game_button_text.setFont(text_font);
+    load_game_button_text.setString("Load game");
+    load_game_button_text.setCharacterSize(25);
+    load_game_button_text.setFillColor(sf::Color::Cyan);
+    load_game_button_text.setStyle(sf::Text::Italic);
+    load_game_button_text.setPosition(570, 300);
+
+    sf::RectangleShape load_game_button_shape;
+    load_game_button_shape.setSize(sf::Vector2f(300, 50));
+    load_game_button_shape.setPosition(490, 295);
+    load_game_button_shape.setOutlineThickness(3.f);
+    load_game_button_shape.setFillColor(sf::Color::Transparent);
+    load_game_button_shape.setOutlineColor(sf::Color::Cyan);
+
     sf::Text settings_button_text;
     settings_button_text.setFont(text_font);
     settings_button_text.setString("Settings");
     settings_button_text.setCharacterSize(25);
     settings_button_text.setFillColor(sf::Color::Cyan);
     settings_button_text.setStyle(sf::Text::Italic);
-    settings_button_text.setPosition(580, 300);
+    settings_button_text.setPosition(580, 400);
 
     sf::RectangleShape settings_button_shape;
     settings_button_shape.setSize(sf::Vector2f(300, 50));
-    settings_button_shape.setPosition(490, 295);
+    settings_button_shape.setPosition(490, 395);
     settings_button_shape.setOutlineThickness(3.f);
     settings_button_shape.setFillColor(sf::Color::Transparent);
     settings_button_shape.setOutlineColor(sf::Color::Cyan);
@@ -91,18 +106,15 @@ int main() {
     settings_back_button_shape.setFillColor(sf::Color::Transparent);
     settings_back_button_shape.setOutlineColor(sf::Color::Cyan);
 
-    university_game::item first_required("algebra book", "you need this for 'Trickster' \nquest", 10, 2);
-    university_game::item first_award("well-rated assignment", "you've completed 'Trickster', \nhooray!", 0, 0);
-    university_game::item third_required("100$ banknote", "give it back to Pashok", 17, 1);
-    university_game::item third_award("weirdo certificate", "you're officially a weirdo now.", 0, 0);
-    university_game::quest first_quest("Trickster", "Go to Mr. Antipoff and try to get a \ngood mark "
-                                        "in algebra without doing it.", 1,
-                                       first_required, first_award);
-    university_game::quest second_quest("Talkative friend", "Have a little chat with Mr. Khrabroff.", 2,
-                                        university_game::item("none", "", 0, 0),
-                                        university_game::item("none", "", 0, 0));
-    university_game::quest third_quest("BONUS: Weirdo", "Find your friend Pashok and \nfollow his instructions", 3,
-                                       third_required,third_award);
+    university_game::quest first_quest;
+    university_game::quest second_quest;
+    university_game::quest third_quest;
+    first_quest.create_from_json("quest1.json");
+    second_quest.create_from_json("quest2.json");
+    third_quest.create_from_json("quest3.json");
+    university_game::item first_required = first_quest.get_required_item();
+    university_game::item third_required = third_quest.get_required_item();
+
     std::vector<university_game::quest> initial_quests = {first_quest, second_quest, third_quest};
     std::vector<university_game::item> initial_items{};
     university_game::player player_1("You", initial_quests, initial_items);
@@ -120,6 +132,7 @@ int main() {
 
     university_game::game my_game(&window, text_font, player_1);
     my_game.setPosition(40.f, 40.f);
+    my_game.load_textures();
 
     bool game_started = false;
     bool settings_opened = false;
@@ -139,8 +152,8 @@ int main() {
                     if (event.key.code == sf::Keyboard::Escape) {
                         window.close();
                     }
-                    if (event.key.code == sf::Keyboard::Right && !inventory_and_quests_opened) {
-                        for (int i = 1; i < 51; i++) {
+                    if ((event.key.code == sf::Keyboard::Right || event.key.code == sf::Keyboard::D) && !inventory_and_quests_opened) {
+                        for (int i = 1; i < 501; i++) {
                             if (!my_game.move(1, i)) {
                                 break;
                             }
@@ -149,8 +162,8 @@ int main() {
                             window.display();
                         }
                     }
-                    if (event.key.code == sf::Keyboard::Up && !inventory_and_quests_opened) {
-                        for (int i = 1; i < 51; i++) {
+                    if ((event.key.code == sf::Keyboard::Up || event.key.code == sf::Keyboard::W) && !inventory_and_quests_opened) {
+                        for (int i = 1; i < 501; i++) {
                             if (!my_game.move(2, i)) {
                                 break;
                             }
@@ -159,8 +172,8 @@ int main() {
                             window.display();
                         }
                     }
-                    if (event.key.code == sf::Keyboard::Left && !inventory_and_quests_opened) {
-                        for (int i = 1; i < 51; i++) {
+                    if ((event.key.code == sf::Keyboard::Left || event.key.code == sf::Keyboard::A) && !inventory_and_quests_opened) {
+                        for (int i = 1; i < 501; i++) {
                             if (!my_game.move(3, i)) {
                                 break;
                             }
@@ -169,8 +182,8 @@ int main() {
                             window.display();
                         }
                     }
-                    if (event.key.code == sf::Keyboard::Down && !inventory_and_quests_opened) {
-                        for (int i = 1; i < 51; i++) {
+                    if ((event.key.code == sf::Keyboard::Down || event.key.code == sf::Keyboard::S) && !inventory_and_quests_opened) {
+                        for (int i = 1; i < 501; i++) {
                             if (!my_game.move(4, i)) {
                                 break;
                             }
@@ -241,6 +254,7 @@ int main() {
                         game_started = true;
 
                         university_game::game new_game(&window, text_font, player_1);
+                        new_game.load_textures();
                         my_game = new_game;
                         my_game.setPosition(40.f, 40.f);
 
@@ -253,7 +267,7 @@ int main() {
                         my_game.get_displayed_items()[1] = third_required;
                     }
                     if (event.mouseButton.x > 490 && event.mouseButton.x < 790
-                        && event.mouseButton.y > 295 && event.mouseButton.y < 345 && !settings_opened) {
+                        && event.mouseButton.y > 395 && event.mouseButton.y < 445 && !settings_opened) {
                         settings_opened = true;
                     }
                     if (event.mouseButton.x > 590 && event.mouseButton.x < 690
@@ -267,6 +281,8 @@ int main() {
                 window.draw(head_text);
                 window.draw(new_game_button_text);
                 window.draw(new_game_button_shape);
+                window.draw(load_game_button_text);
+                window.draw(load_game_button_shape);
                 window.draw(settings_button_text);
                 window.draw(settings_button_shape);
                 window.draw(copyright_text);
