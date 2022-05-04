@@ -7,6 +7,7 @@
 #include <vector>
 #include <set>
 #include <string>
+#include <random>
 #include <SFML/Graphics.hpp>
 #include <SFML/Graphics/Texture.hpp>
 
@@ -281,7 +282,7 @@ namespace university_game {
             split_shape.setPosition(active_v * (cell_v_size) + 100, active_h * (cell_h_size) - 130);
 
             sf::Font text_font;
-            text_font.loadFromFile("C:/Users/bonda/cppgame/University_game/fonts/arial2.ttf");
+            text_font.loadFromFile("C:/Users/Serge/ClionProjects/University_game/fonts/arial.ttf");
 
             sf::Text quest_text;
             quest_text.setFont(text_font);
@@ -441,7 +442,7 @@ namespace university_game {
             frame_shape.setPosition(active_v * (cell_v_size) - 250, active_h * (cell_h_size) - 50);
 
             sf::Font text_font;
-            text_font.loadFromFile("C:/Users/bonda/cppgame/University_game/fonts/arial.ttf");
+            text_font.loadFromFile("C:/Users/Serge/ClionProjects/University_game/fonts/arial.ttf");
 
             sf::Text quest_text;
             quest_text.setFont(text_font);
@@ -533,7 +534,7 @@ namespace university_game {
 
             sf::Texture mg_bugs_carpet_texture;
             mg_bugs_carpet_texture.loadFromFile(
-                    "/Users/borismikhaylov/CLionProjects/University_game/images/carpet_new2.png");
+                    "/Users/Serge/CLionProjects/University_game/images/carpet_new2.png");
 
 //            sf::RectangleShape mg_bug_field(sf::Vector2f(5000, 5000));
 //            mg_bug_field.setFillColor(sf::Color::White);
@@ -552,7 +553,7 @@ namespace university_game {
 //                }
 //            }
             sf::Texture bug_texture;
-            bug_texture.loadFromFile("/Users/borismikhaylov/CLionProjects/University_game/images/bug.png");
+            bug_texture.loadFromFile("/Users/Serge/CLionProjects/University_game/images/bug.png");
             sf::RectangleShape bug_shape(sf::Vector2f(500, 500));
             bug_shape.setTexture(&bug_texture);
             bug cur_bug;
@@ -585,6 +586,251 @@ namespace university_game {
 
         void add_question(const std::string &new_question, std::vector<std::string> answers) {
             questions.emplace_back(new_question, std::move(answers));
+        }
+    };
+
+    struct sudoku_cell {
+    private:
+        int value = 0;
+        bool changeable = true; //initially generated numbers cannot be changed
+    public:
+        sudoku_cell() = default;
+
+        explicit sudoku_cell(int value_, bool changeable_) : value(value_), changeable(changeable_) {}
+
+        void set_to_unchangeable(bool new_change) {
+            changeable = new_change;
+        }
+        [[nodiscard]] bool get_changeable() const{
+            return changeable;
+        }
+
+        void set_value(int new_value) {
+            value = new_value;
+        }
+
+        [[nodiscard]] int get_value() const{
+            return value;
+        }
+    };
+
+    class sudoku_game : public sf::Drawable, public sf::Transformable {
+    private:
+        int selected_x_cord = 0;
+        int selected_y_cord = 0;
+        std::vector<std::vector<sudoku_cell>> current_map;
+        std::vector<std::vector<int>> solution;
+        int number_of_correct_placements = 0;
+        int center_x_cord = 0;
+        int center_y_cord = 0;
+    public:
+        sudoku_game() = default;
+        void new_sudoku(int center_x, int center_y) {
+            solution.resize(9);
+            current_map.resize(9);
+            number_of_correct_placements = 81;
+            center_x_cord = center_x, center_y_cord = center_y;
+            solution = {
+                    {1,2,3,  4,5,6,  7,8,9},
+                    {4,5,6,  7,8,9,  1,2,3},
+                    {7,8,9,  1,2,3,  4,5,6},
+
+                    {2,3,1,  5,6,4,  8,9,7},
+                    {5,6,4,  8,9,7,  2,3,1},
+                    {8,9,7,  2,3,1,  5,6,4},
+
+                    {3,1,2,  6,4,5,  9,7,8},
+                    {6,4,5,  9,7,8,  3,1,2},
+                    {9,7,8,  3,1,2,  6,4,5}
+            };
+
+            std::srand(std::time(nullptr));
+
+            for (int i = 0; i < 9; ++i) {//swap random sets of equal numbers
+                current_map[i].clear();
+                int j = rand() % 9;
+                for (int x = 0; x < 9; ++x) {
+                    for (int y = 0; y < 9; ++y) {
+                        if (solution[x][y] == i + 1) {
+                            solution[x][y] = j + 1;
+                        } else if (solution[x][y] == j + 1) {
+                            solution[x][y] = i + 1;
+                        }
+                    }
+                }
+            }
+
+            for (int i = 0; i < 9; ++i) {//shuffle strings in every string trio
+                int second_string = rand()%3;
+                int group = i/3;
+                for (int j = 0; j < 9; ++j) {
+                    std::swap(solution[i][j], solution[group*3 + second_string][j]);
+                }
+            }
+
+            for (int i = 0; i < 9; ++i) {//shuffle columns in every column trio
+                int second_column = rand()%3;
+                int group = i/3;
+                for (int j = 0; j < 9; ++j) {
+                    std::swap(solution[j][i], solution[j][group*3 + second_column]);
+                }
+            }
+
+            for (int i = 0; i < 3; ++i) { //shuffle string trios
+                int str_trio = rand()%3;
+                for (int k = 0; k < 3; ++k) {
+                    for (int j = 0; j < 9; ++j) {
+                        std::swap(solution[i*3 + k][j], solution[str_trio*3 + k][j]);
+                    }
+                }
+            }
+
+            for (int i = 0; i < 3; ++i) { //shuffle column trios
+                int vertical_trio = rand()%3;
+                for (int k = 0; k < 3; ++k) {
+                    for (int j = 0; j < 9; ++j) {
+                        std::swap(solution[j][i*3 + k], solution[j][vertical_trio*3 + k]);
+                    }
+                }
+            }
+
+            std::vector<std::pair<int, int>> random_order;
+            for (int i = 0; i < 9; ++i) {
+                for (int j = 0; j < 9; ++j) {
+                    current_map[i].emplace_back(sudoku_cell(solution[i][j], true));
+                    random_order.emplace_back(std::make_pair(i, j));
+                }
+            }
+
+            auto rng = std::default_random_engine {};
+            std::shuffle(random_order.begin(), random_order.end(), rng);
+
+            for (int i = 0; i < 81; ++i) {
+                if (removeable(random_order[i].first, random_order[i].second)) {
+                    --number_of_correct_placements;
+                    current_map[random_order[i].first][random_order[i].second].set_value(-1);
+                } else {
+                    current_map[random_order[i].first][random_order[i].second].set_to_unchangeable(false);
+                }
+            }
+        }
+
+        bool removeable(int i, int j) {
+            int removed_value = current_map[i][j].get_value();
+            current_map[i][j].set_value(-1);
+            for (int a = 0; a < 3; ++a) {
+                for (int b = 0; b < 3; ++b) {
+                    if (!(a == i%3 && b == j%3)) {
+                        if (placeable((i/3)*3 + a, (j/3)*3 + b, removed_value)) {
+                            current_map[i][j].set_value(removed_value);
+                            return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+
+        bool placeable(int i, int j, int val) {
+            if (current_map[i][j].get_value() != -1) {
+                return false;
+            }
+            for (int x = 0; x < 9; ++x) {
+                if (current_map[x][j].get_value() == val) {
+                    return false;
+                }
+                if (current_map[i][x].get_value() == val) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        void set_selected_cell(int i, int j) {
+            if ((0 <= i) && (i < 9) && (0 <= j) && (j < 9)) {
+                selected_x_cord = i;
+                selected_y_cord = j;
+            }
+        }
+
+        bool set_value(int value) {
+            if (!( ((0 < value) && (value < 10)) || value == -1)) {
+                return false;
+            }
+            if (!current_map[selected_y_cord][selected_x_cord].get_changeable()) {
+                return false;
+            }
+            if (value == solution[selected_y_cord][selected_x_cord]){
+                if (current_map[selected_y_cord][selected_x_cord].get_value() != solution[selected_y_cord][selected_x_cord]) {
+                    ++number_of_correct_placements;
+                }
+            }
+            if (value != solution[selected_y_cord][selected_x_cord]){
+                if (current_map[selected_y_cord][selected_x_cord].get_value() == solution[selected_y_cord][selected_x_cord]) {
+                    --number_of_correct_placements;
+                }
+            }
+            current_map[selected_y_cord][selected_x_cord].set_value(value);
+            return (number_of_correct_placements >= 81);
+        }
+
+        void draw(sf::RenderTarget &target, sf::RenderStates states) const override {
+            states.transform *= getTransform();
+
+            sf::RectangleShape field_shape(sf::Vector2f(450, 450));
+            field_shape.setFillColor(sf::Color::White);
+            field_shape.setOutlineColor(sf::Color::Black);
+            field_shape.setOutlineThickness(10.f);
+            field_shape.setPosition(center_x_cord * cell_v_size - 225, center_y_cord * cell_h_size - 225);
+
+            sf::RectangleShape vertical(sf::Vector2f(5, 450));
+            vertical.setFillColor(sf::Color::Black);
+
+            sf::RectangleShape horizontal(sf::Vector2f(450, 5));
+            horizontal.setFillColor(sf::Color::Black);
+
+            sf::Font text_font;
+            text_font.loadFromFile("C:/Users/Serge/ClionProjects/University_game/fonts/arial.ttf");
+
+            sf::Text number;
+            number.setFont(text_font);
+            number.setCharacterSize(35);
+            number.setFillColor(sf::Color::Blue);
+            number.setStyle(sf::Text::Bold);
+
+            target.draw(field_shape, states);
+            for (int i = 0; i < 8; ++i) {
+                vertical.setPosition(center_x_cord * cell_v_size - 175 + i*50, center_y_cord * cell_h_size - 225);
+                horizontal.setPosition(center_x_cord * cell_v_size - 225, center_y_cord * cell_h_size - 175 + i*50);
+                if (i % 3 == 2) {
+                    vertical.setFillColor(sf::Color::Red);
+                    horizontal.setFillColor(sf::Color::Red);
+                } else {
+                    vertical.setFillColor(sf::Color::Black);
+                    horizontal.setFillColor(sf::Color::Black);
+                }
+                target.draw(vertical, states);
+                target.draw(horizontal, states);
+            }
+
+            int val;
+            for (int i = 0; i < 9; ++i) {
+                for (int j = 0; j < 9; ++j) {
+                    val = current_map[i][j].get_value();
+                    if (!current_map[i][j].get_changeable()) {
+                        number.setFillColor(sf::Color::Blue);
+                    } else {
+                        number.setFillColor(sf::Color::Green);
+                    }
+                    if (val == -1) {
+                        number.setString("");
+                    } else {
+                        number.setString(std::to_string(val));
+                    }
+                    number.setPosition(center_x_cord * cell_v_size - 210 + j*50, center_y_cord * cell_h_size - 220 + i*50);
+                    target.draw(number, states);
+                }
+            }
         }
     };
 
@@ -740,11 +986,11 @@ namespace university_game {
 
             sf::Texture walkable_field_texture;
             walkable_field_texture.loadFromFile(
-                    "/Users/borismikhaylov/CLionProjects/University_game/images/walkable_field.png");
+                    "/Users/Serge/CLionProjects/University_game/images/walkable_field.png");
 
             sf::Texture unwalkable_field_texture;
             unwalkable_field_texture.loadFromFile(
-                    "/Users/borismikhaylov/CLionProjects/University_game/images/unwalkable_field.png");
+                    "/Users/Serge/CLionProjects/University_game/images/unwalkable_field.png");
 
             // Подготавливаем рамку для отрисовки всех плашек
             sf::RectangleShape shape;
@@ -767,26 +1013,26 @@ namespace university_game {
 
             sf::Texture active_player_texture_front;
             active_player_texture_front.loadFromFile(
-                    "/Users/borismikhaylov/CLionProjects/University_game/images/player_default.png");
+                    "/Users/Serge/CLionProjects/University_game/images/player_default.png");
 
             sf::Texture active_player_texture_right;
             active_player_texture_right.loadFromFile(
-                    "/Users/borismikhaylov/CLionProjects/University_game/images/player_default_right.png");
+                    "/Users/Serge/CLionProjects/University_game/images/player_default_right.png");
 
             sf::Texture active_player_texture_left;
             active_player_texture_left.loadFromFile(
-                    "/Users/borismikhaylov/CLionProjects/University_game/images/player_default_left.png");
+                    "/Users/Serge/CLionProjects/University_game/images/player_default_left.png");
 
             sf::Texture active_player_texture_back;
             active_player_texture_back.loadFromFile(
-                    "/Users/borismikhaylov/CLionProjects/University_game/images/player_default_back.png");
+                    "/Users/Serge/CLionProjects/University_game/images/player_default_back.png");
 
             sf::Texture teacher_texture;
             teacher_texture.loadFromFile(
-                    "/Users/borismikhaylov/CLionProjects/University_game/images/teacher_default.png");
+                    "/Users/Serge/CLionProjects/University_game/images/teacher_default.png");
 
             sf::Texture item_texture;
-            item_texture.loadFromFile("/Users/borismikhaylov/CLionProjects/University_game/images/item_default.png");
+            item_texture.loadFromFile("/Users/Serge/CLionProjects/University_game/images/item_default.png");
 
             sf::RectangleShape active_player_shape(sf::Vector2f(cell_v_size, cell_h_size));
             if (active_player.get_direction() == 1) {
