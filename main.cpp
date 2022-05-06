@@ -1,12 +1,16 @@
 #include <SFML/Graphics.hpp>
 #include "structure.h"
+#include <cmath>
+#include <random>
 
 int main() {
     std::string prefix = university_game::prefix;
     sf::RenderWindow window(sf::VideoMode(1280, 720), "University game");
+    window.setKeyRepeatEnabled(true);
+    window.setFramerateLimit(1000);
 
     sf::View standard_view(sf::FloatRect(0, 0,
-                                window.getSize().x, window.getSize().y));
+                                         window.getSize().x, window.getSize().y));
     standard_view.setCenter(640, 360);
 
     sf::Font text_font;
@@ -119,8 +123,8 @@ int main() {
     std::vector<university_game::item> initial_items{};
     university_game::player player_1("You", initial_quests, initial_items);
     university_game::teacher teacher_1("Mr. Antipoff", 2, 1, 1,
-                             {"Hey! Wanna mark? Bring me my algebra book.",
-                              "Did you actually find it?", "Alright, here we go."}, first_quest.get_name());
+                                       {"Hey! Wanna mark? Bring me my algebra book.",
+                                        "Did you actually find it?", "Alright, here we go."}, first_quest.get_name());
     university_game::teacher teacher_2("Mr. Khrabroff", 3, 12, 5,
                                        {"Hey!",
                                         "I've heard that you're a trickster now.",
@@ -134,10 +138,41 @@ int main() {
     my_game.setPosition(40.f, 40.f);
     my_game.load_textures();
 
+    // mini-game Tetris
+    sf::Texture tile_tex;
+    tile_tex.loadFromFile(university_game::prefix + "/images/tetris_tile.png");
+
+    sf::Sprite tile(tile_tex);
+    tile.setScale(2.83, 2.83);
+
+    float tile_size = tile_tex.getSize().x * tile.getScale().x;
+
+    //Setup score counter
+    sf::Text score;
+    score.setFont(text_font);
+    score.setCharacterSize(15);
+    score.setFillColor(sf::Color::Black);
+    score.setPosition(10,25);
+    sf::Vector2<float> score_scale(1.5f,1.5f);
+    score.setScale(score_scale);
+    score.setString("Lines: 0");
+
+    university_game::byte colliders[16][12];
+    university_game::byte grid[16][12];
+    university_game::part piece;
+    piece = piece.create_part(static_cast<university_game::part_type>((rand() % 7)));
+    unsigned int timer = 0, gamespeed = 10, scoreCounter = 0;
+
+    sf::Vector2f view_position(250, 370);
+    sf::View view(sf::FloatRect(0, 0,
+                                window.getSize().x, window.getSize().y));
+    view.setCenter(view_position);
+
     bool game_started = false;
     bool settings_opened = false;
     bool inventory_and_quests_opened = false;
     bool teacher_speaking = false;
+    bool mini_game_tetris_started = false;
     int executing_id = 0;
     int id = 0;
 
@@ -152,7 +187,8 @@ int main() {
                     if (event.key.code == sf::Keyboard::Escape) {
                         window.close();
                     }
-                    if ((event.key.code == sf::Keyboard::Right || event.key.code == sf::Keyboard::D) && !inventory_and_quests_opened) {
+                    if ((event.key.code == sf::Keyboard::Right || event.key.code == sf::Keyboard::D) &&
+                    !inventory_and_quests_opened && !mini_game_tetris_started) {
                         for (int i = 1; i < 501; i++) {
                             if (!my_game.move(1, i)) {
                                 break;
@@ -162,7 +198,8 @@ int main() {
                             window.display();
                         }
                     }
-                    if ((event.key.code == sf::Keyboard::Up || event.key.code == sf::Keyboard::W) && !inventory_and_quests_opened) {
+                    if ((event.key.code == sf::Keyboard::Up || event.key.code == sf::Keyboard::W) &&
+                    !inventory_and_quests_opened && !mini_game_tetris_started) {
                         for (int i = 1; i < 501; i++) {
                             if (!my_game.move(2, i)) {
                                 break;
@@ -172,7 +209,8 @@ int main() {
                             window.display();
                         }
                     }
-                    if ((event.key.code == sf::Keyboard::Left || event.key.code == sf::Keyboard::A) && !inventory_and_quests_opened) {
+                    if ((event.key.code == sf::Keyboard::Left || event.key.code == sf::Keyboard::A) &&
+                    !inventory_and_quests_opened && !mini_game_tetris_started) {
                         for (int i = 1; i < 501; i++) {
                             if (!my_game.move(3, i)) {
                                 break;
@@ -182,7 +220,8 @@ int main() {
                             window.display();
                         }
                     }
-                    if ((event.key.code == sf::Keyboard::Down || event.key.code == sf::Keyboard::S) && !inventory_and_quests_opened) {
+                    if ((event.key.code == sf::Keyboard::Down || event.key.code == sf::Keyboard::S) &&
+                    !inventory_and_quests_opened && !mini_game_tetris_started) {
                         for (int i = 1; i < 501; i++) {
                             if (!my_game.move(4, i)) {
                                 break;
@@ -192,7 +231,8 @@ int main() {
                             window.display();
                         }
                     }
-                    if (event.key.code == sf::Keyboard::X && !inventory_and_quests_opened) {
+                    if (event.key.code == sf::Keyboard::X && !inventory_and_quests_opened &&
+                    !mini_game_tetris_started) {
                         id = my_game.check_presence_of_teacher();
                         if (id > 0 && (executing_id == 0
                                        || executing_id == id
@@ -202,10 +242,62 @@ int main() {
                         }
                         my_game.take_item_if_possible();
                     }
-                    if (event.key.code == sf::Keyboard::E && !inventory_and_quests_opened) {
+                    if (event.key.code == sf::Keyboard::E && !inventory_and_quests_opened &&
+                    !mini_game_tetris_started) {
                         inventory_and_quests_opened = true;
-                    } else if (event.key.code == sf::Keyboard::E && inventory_and_quests_opened) {
+                    } else if (event.key.code == sf::Keyboard::E && inventory_and_quests_opened &&
+                    !mini_game_tetris_started) {
                         inventory_and_quests_opened = false;
+                    }
+                    if (event.key.code == sf::Keyboard::T && !inventory_and_quests_opened &&
+                    !mini_game_tetris_started) {
+                        mini_game_tetris_started = true;
+                        window.setFramerateLimit(45);
+                        timer = 0, gamespeed = 10, scoreCounter = 0;
+                        for (int k = 0; k < 16; k++) {
+                            for (int j = 0; j < 12; j++) {
+                                colliders[k][j] = 0;
+                                grid[k][j] = 0;
+                            }
+                        }
+                        score.setString("Lines: 0");
+                    } else if (event.key.code == sf::Keyboard::T && !inventory_and_quests_opened &&
+                               mini_game_tetris_started) {
+                        mini_game_tetris_started = false;
+                        window.setFramerateLimit(1000);
+                        timer = 0, gamespeed = 10, scoreCounter = 0;
+                        for (int k = 0; k < 16; k++) {
+                            for (int j = 0; j < 12; j++) {
+                                colliders[k][j] = 0;
+                                grid[k][j] = 0;
+                            }
+                        }
+                        score.setString("Lines: 0");
+                    }
+                    if (mini_game_tetris_started) {
+                        if (event.type == sf::Event::KeyPressed){
+                            if (event.key.code == sf::Keyboard::Up) {
+                                piece.rotate(piece, colliders);
+                            } else if (event.key.code == sf::Keyboard::Left &&
+                                     piece.a.x != 0 && piece.b.x != 0 && piece.c.x != 0 && piece.d.x != 0 &&
+                                     (colliders[piece.a.y][piece.a.x - 1]) != 2 && (colliders[piece.b.y][piece.b.x - 1]) != 2 &&
+                                     (colliders[piece.c.y][piece.c.x - 1]) != 2 && (colliders[piece.d.y][piece.d.x - 1]) != 2)
+                            {
+                                piece.a.x--;
+                                piece.b.x--;
+                                piece.c.x--;
+                                piece.d.x--;
+                            } else if (event.key.code == sf::Keyboard::Right &&
+                                     piece.a.x != 11 && piece.b.x != 11 && piece.c.x != 11 && piece.d.x != 11 &&
+                                     (colliders[piece.a.y][piece.a.x + 1]) != 2 && (colliders[piece.b.y][piece.b.x + 1]) != 2 &&
+                                     (colliders[piece.c.y][piece.c.x + 1]) != 2 && (colliders[piece.d.y][piece.d.x + 1]) != 2)
+                            {
+                                piece.a.x++;
+                                piece.b.x++;
+                                piece.c.x++;
+                                piece.d.x++;
+                            }
+                        }
                     }
                 }
                 if (event.mouseButton.button == sf::Mouse::Left) {
@@ -233,6 +325,131 @@ int main() {
                     }
                     teacher_speaking = false;
                     my_game.get_teachers()[id - 2].satisfy_quest(my_game.get_player());
+                }
+                if (mini_game_tetris_started) {
+                    window.setView(view);
+
+                    window.clear(sf::Color(224, 145, 255));
+
+                    sf::RectangleShape rectangle;
+                    rectangle.setSize(sf::Vector2f(542, 706));
+                    rectangle.setOutlineColor(sf::Color::Black);
+                    rectangle.setFillColor(sf::Color::Transparent);
+                    rectangle.setOutlineThickness(5);
+                    rectangle.setPosition(0, 18);
+                    window.draw(rectangle);
+
+                    sf::Sprite piece_tile = tile;
+
+                    piece_tile.setPosition(tile_size * piece.a.x, tile_size * piece.a.y);
+                    window.draw(piece_tile);
+
+                    piece_tile.setPosition(tile_size * piece.b.x, tile_size * piece.b.y);
+                    window.draw(piece_tile);
+
+                    piece_tile.setPosition(tile_size * piece.c.x, tile_size * piece.c.y);
+                    window.draw(piece_tile);
+
+                    piece_tile.setPosition(tile_size * piece.d.x, tile_size * piece.d.y);
+                    window.draw(piece_tile);
+
+                    for (size_t i = 0; i < 16; i++) {
+                        for (size_t j = 0; j < 12; j++) {
+                            if (colliders[i][j] == 2) {
+                                grid[i][j] = 2;
+                            } else {
+                                grid[i][j] = 0;
+                            }
+                        }
+                    }
+
+                    if (timer > gamespeed) {
+                        if (grid[piece.a.y + 1][piece.a.x] == 2 ||
+                            grid[piece.b.y + 1][piece.b.x] == 2 ||
+                            grid[piece.c.y + 1][piece.c.x] == 2 ||
+                            grid[piece.d.y + 1][piece.d.x] == 2 ||
+                            piece.a.y == 15 || piece.b.y == 15 || piece.c.y == 15 || piece.d.y == 15)
+                        {
+                            grid[piece.a.y][piece.a.x] = 2;
+                            grid[piece.b.y][piece.b.x] = 2;
+                            grid[piece.c.y][piece.c.x] = 2;
+                            grid[piece.d.y][piece.d.x] = 2;
+
+                            colliders[piece.a.y][piece.a.x] = 2;
+                            colliders[piece.b.y][piece.b.x] = 2;
+                            colliders[piece.c.y][piece.c.x] = 2;
+                            colliders[piece.d.y][piece.d.x] = 2;
+
+                            piece = piece.create_part(static_cast<university_game::part_type>((rand() % 7)));
+                        } else {
+                            grid[piece.a.y + 1][piece.a.x] = 1;
+                            grid[piece.b.y + 1][piece.b.x] = 1;
+                            grid[piece.c.y + 1][piece.c.x] = 1;
+                            grid[piece.d.y + 1][piece.d.x] = 1;
+
+                            piece.a.y++;
+                            piece.b.y++;
+                            piece.c.y++;
+                            piece.d.y++;
+                        }
+
+                        university_game::byte tetris_row = 0;
+                        for (size_t i = 0; i < 16; i++) {
+                            university_game::byte blocks_in_a_row = 0;
+                            for (size_t j = 0; j < 12; j++) {
+                                if (colliders[i][j] == 2) {
+                                    blocks_in_a_row++;
+                                }
+                            }
+                            if (blocks_in_a_row == 12) {
+                                tetris_row++;
+                                for (size_t k = i; k > 0; k--) {
+                                    for (size_t l = 0; l < 12; l++) {
+                                        colliders[k][l] = colliders[k - 1][l];
+                                    }
+                                }
+                                scoreCounter++;
+                                char temp[256];
+                                sprintf_s(temp, "Lines: %i", scoreCounter);
+                                score.setString(temp);
+                            }
+                        }
+
+                        for (size_t i = 0; i < 12; i++) {
+                            if (colliders[0][i] == 2) {
+                                mini_game_tetris_started = false;
+                                timer = 0, gamespeed = 10, scoreCounter = 0;
+                                for (int k = 0; k < 16; k++) {
+                                    for (int j = 0; j < 12; j++) {
+                                        colliders[k][j] = 0;
+                                        grid[k][j] = 0;
+                                    }
+                                }
+                                window.setFramerateLimit(1000);
+                                break;
+                            }
+                        }
+                        timer = 0;
+                    }
+                    else {
+                        timer++;
+                    }
+
+                    for (size_t i = 0; i < 16; i++) {
+                        for (size_t j = 0; j < 12; j++) {
+                            if (grid[i][j] == 1) {
+                                sf::Sprite t = tile;
+                                t.setPosition(tile_size * j, tile_size * i);
+                                window.draw(t);
+                            }
+                            if (colliders[i][j] == 2) {
+                                sf::Sprite t = tile;
+                                t.setPosition(tile_size * j, tile_size * i);
+                                window.draw(t);
+                            }
+                        }
+                    }
+                    window.draw(score);
                 }
                 window.display();
             }

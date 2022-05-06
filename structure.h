@@ -1,6 +1,7 @@
 #ifndef UNIVERSITY_GAME_STRUCTURE_H
 #define UNIVERSITY_GAME_STRUCTURE_H
 
+#include <cmath>
 #include <fstream>
 #include <string>
 #include <utility>
@@ -13,6 +14,7 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 
+#define PI 3.14159265359
 namespace university_game {
 
 #if defined (_WIN64)
@@ -22,6 +24,73 @@ namespace university_game {
 #if defined (__linux__)
     const std::string prefix = "";
 #endif
+
+using byte = uint8_t;
+enum part_type { S, Z, L, J, SQR, I, T };
+
+struct Vec2 {
+    byte y, x;
+    Vec2(){}
+    Vec2(byte dy, byte dx) : x(dx), y(dy){}
+};
+
+struct part {
+    Vec2 a, b, c, d;
+    part(){}
+    part(byte ax, byte ay, byte bx, byte by, byte cx, byte cy, byte dx, byte dy)
+            : a(Vec2(ax,ay)), b(Vec2(bx, by)), c(Vec2(cx, cy)), d(Vec2(dx, dy)) {}
+    part(Vec2 da, Vec2 db, Vec2 dc, Vec2 dd)
+            : a(da), b(db), c(dc), d(dd){}
+    part create_part(part_type type) {
+        switch (type) {
+            case S : return part(Vec2(1, 5), Vec2(1, 4), Vec2(0, 4), Vec2(2, 5));
+            case Z: return part(Vec2(1, 4), Vec2(1, 5), Vec2(0, 5), Vec2(2, 4));
+            case L: return part(Vec2(1, 5), Vec2(1, 4), Vec2(1, 6), Vec2(0, 6));
+            case J: return part(Vec2(1, 5), Vec2(1, 4), Vec2(1, 6), Vec2(0, 4));
+            case SQR: return part(Vec2(1, 5), Vec2(1, 4), Vec2(0, 5), Vec2(0, 4));
+            case I: return part(Vec2(1, 5), Vec2(1, 4), Vec2(1, 6), Vec2(1, 7));
+            case T: return part(Vec2(1, 5), Vec2(1, 4), Vec2(1, 6), Vec2(0, 5));
+            default:
+                break;
+        }
+    }
+
+    void rotate(part& part, byte colliders[16][12]) {
+        float angle = 90 * (PI / 180);
+
+        float b_offset_x = part.b.x - part.a.x;
+        float c_offset_x = part.c.x - part.a.x;
+        float d_offset_x = part.d.x - part.a.x;
+
+        float b_offset_y = part.b.y - part.a.y;
+        float c_offset_y = part.c.y - part.a.y;
+        float d_offset_y = part.d.y - part.a.y;
+
+        float pbx = part.a.x + (b_offset_x * cosf(angle) - b_offset_y * sinf(angle));
+        float pby = part.a.y + (b_offset_x * sinf(angle) + b_offset_y * cosf(angle));
+
+        float pcx = part.a.x + (c_offset_x * cosf(angle) - c_offset_y * sinf(angle));
+        float pcy = part.a.y + (c_offset_x * sinf(angle) + c_offset_y * cosf(angle));
+
+        float pdx = part.a.x + (d_offset_x * cosf(angle) - d_offset_y * sinf(angle));
+        float pdy = part.a.y + (d_offset_x * sinf(angle) + d_offset_y * cosf(angle));
+
+        if (colliders[(byte)pby][(byte)pbx] != 2 &&
+            colliders[(byte)pcy][(byte)pcx] != 2 &&
+            colliders[(byte)pdy][(byte)pdx] != 2 &&
+            part.a.x != 1 && part.a.y != 1)
+        {
+            part.b.x = pbx;
+            part.b.y = pby;
+
+            part.c.x = pcx;
+            part.c.y = pcy;
+
+            part.d.x = pdx;
+            part.d.y = pdy;
+        }
+    }
+};
 
 const int v_table = 28;
 const int h_table = 6;
