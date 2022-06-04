@@ -11,7 +11,8 @@ include_directories(${SFML_INCLUDE_DIR})
 
 find_package(SFML 2.5 COMPONENTS graphics audio REQUIRED)
 
-add_executable(University_game main.cpp structure.h)
+add_executable(University_game main.cpp structure.h structure.cpp)
+#add_executable(University_game construct_quest.cpp)
 target_link_libraries(University_game sfml-graphics sfml-audio)
 
 
