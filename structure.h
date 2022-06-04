@@ -598,10 +598,10 @@ namespace university_game {
 
         explicit sudoku_cell(int value_, bool changeable_) : value(value_), changeable(changeable_) {}
 
-        void set_to_unchangeable(bool new_change) {
+        void set_changeability(bool new_change) {
             changeable = new_change;
         }
-        [[nodiscard]] bool get_changeable() const{
+        [[nodiscard]] bool get_changeability() const{
             return changeable;
         }
 
@@ -624,10 +624,11 @@ namespace university_game {
         int center_x_cord = 0;
         int center_y_cord = 0;
     public:
-        sudoku_game() = default;
-        void new_sudoku(int center_x, int center_y) {
+        sudoku_game() {
             solution.resize(9);
             current_map.resize(9);
+        }
+        void new_sudoku(int center_x, int center_y) {
             number_of_correct_placements = 81;
             center_x_cord = center_x, center_y_cord = center_y;
             solution = {
@@ -710,7 +711,7 @@ namespace university_game {
                     --number_of_correct_placements;
                     current_map[random_order[i].first][random_order[i].second].set_value(-1);
                 } else {
-                    current_map[random_order[i].first][random_order[i].second].set_to_unchangeable(false);
+                    current_map[random_order[i].first][random_order[i].second].set_changeability(false);
                 }
             }
         }
@@ -757,7 +758,7 @@ namespace university_game {
             if (!( ((0 < value) && (value < 10)) || value == -1)) {
                 return false;
             }
-            if (!current_map[selected_y_cord][selected_x_cord].get_changeable()) {
+            if (!current_map[selected_y_cord][selected_x_cord].get_changeability()) {
                 return false;
             }
             if (value == solution[selected_y_cord][selected_x_cord]){
@@ -817,7 +818,7 @@ namespace university_game {
             for (int i = 0; i < 9; ++i) {
                 for (int j = 0; j < 9; ++j) {
                     val = current_map[i][j].get_value();
-                    if (!current_map[i][j].get_changeable()) {
+                    if (!current_map[i][j].get_changeability()) {
                         number.setFillColor(sf::Color::Blue);
                     } else {
                         number.setFillColor(sf::Color::Green);
