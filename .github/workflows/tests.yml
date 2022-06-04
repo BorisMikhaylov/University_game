@@ -1,0 +1,29 @@
+name: Run tests
+on:
+  pull_request:
+    branches:
+      - master
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake libsfml-dev
+
+      - name: Compile
+        run: |
+          mkdir build
+          cd build
+          cmake ..
+          make
+          cd ..
