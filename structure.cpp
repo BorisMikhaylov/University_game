@@ -20,8 +20,8 @@ namespace university_game {
     sf::Texture bug_texture;
 
     void game::load_textures() {
-        text_font.loadFromFile(prefix + "/fonts/arial.ttf");
-        text_font_.loadFromFile(prefix + "/fonts/arial.ttf");
+        text_font.loadFromFile(prefix + "/fonts/try/arial.ttf");
+        text_font_.loadFromFile(prefix + "/fonts/try/arial.ttf");
         walkable_field_texture.loadFromFile(prefix + "/images/walkable_field.png");
         unwalkable_field_texture.loadFromFile(prefix + "/images/unwalkable_field.png");
         active_player_texture_front.loadFromFile(prefix + "/images/player_default.png");

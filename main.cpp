@@ -14,7 +14,7 @@ int main() {
     standard_view.setCenter(640, 360);
 
     sf::Font text_font;
-    text_font.loadFromFile(prefix + "/fonts/arial.ttf");
+    text_font.loadFromFile(prefix + "/fonts/try/arial.ttf");
 
     sf::Text head_text;
     head_text.setFont(text_font);
@@ -194,6 +194,7 @@ int main() {
     bool minigame_sudoku_started = false;
     bool minigame_bugs_started = false;
     bool sudoku_victory = false;
+    bool game_started_ever = false;
     int executing_id = 0;
     int id = 0;
 
@@ -201,9 +202,6 @@ int main() {
         if (game_started) {
             sf::Event event{};
             if (minigame_bugs_started) { //even if nothing is happening, the bugs still are moving and appearing
-//                for (int i: mg_bugs.bugs_id) {
-//                    mg_bugs.move_bug(i);
-//                }
                 mg_bugs.move_bugs();
                 if (rand() % 2000 == 0 && mg_bugs.count_bugs <= 20) {
                     mg_bugs.add_bug();
@@ -642,9 +640,11 @@ int main() {
                 }
                 if (event.mouseButton.button == sf::Mouse::Left) {
                     if (event.mouseButton.x > 490 && event.mouseButton.x < 790
-                        && event.mouseButton.y > 195 && event.mouseButton.y < 245 && !settings_opened) {
+                        && event.mouseButton.y > 195 && event.mouseButton.y < 245 &&
+                        !settings_opened) { // start new game
 
                         game_started = true;
+                        game_started_ever = true;
 
                         university_game::game new_game(&window, text_font, player_1);
                         new_game.load_textures();
@@ -658,6 +658,10 @@ int main() {
                         my_game.get_displayed_items()[0] = first_required;
                         third_required.set_displayed(true);
                         my_game.get_displayed_items()[1] = third_required;
+                    }
+                    if (event.mouseButton.x > 490 && event.mouseButton.x < 790 && event.mouseButton.y > 295 &&
+                        event.mouseButton.y < 345 && !settings_opened && game_started_ever) { // load game
+                        game_started = true;
                     }
                     if (event.mouseButton.x > 490 && event.mouseButton.x < 790
                         && event.mouseButton.y > 395 && event.mouseButton.y < 445 && !settings_opened) {
