@@ -133,8 +133,10 @@ namespace university_game {
         bug_shape.setTexture(&bug_texture);
         bug cur_bug{};
         for (int b: bugs_id) {
-            sf::Vector2f position(id_bug.at(b).active_x, id_bug.at(b).active_y);
+            sf::Vector2f position(id_bug.at(b).active_x + cell_v_size / 2, id_bug.at(b).active_y + cell_h_size / 2);
             bug_shape.setPosition(position);
+            bug_shape.setOrigin(sf::Vector2f(cell_v_size / 2, cell_h_size / 2));
+            bug_shape.setRotation(id_bug.at(b).angle / PI / 2 * 360 + 90);
             target.draw(bug_shape, states);
         }
     }

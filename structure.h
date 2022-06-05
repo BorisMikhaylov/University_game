@@ -494,17 +494,34 @@ namespace university_game {
 
     struct bug {
         int id;
-        int active_x;
-        int active_y;
+        double active_x;
+        double active_y;
+        double angle = 0;
 
         bug() = default;
 
         bug(int pos_x, int pos_y, int new_id) : active_x(pos_x), active_y(pos_y), id(new_id) {
-
         }
 
         [[nodiscard]] int get_id() const {
             return id;
+        }
+
+        void run_bug(int v_size, int h_size) {
+            const double speed = 0.3;
+            double dx = speed * cos(angle);
+            if (active_x + dx < 0 || active_x + dx > v_size) {
+                angle = PI - angle;
+                dx = speed * cos(angle);
+            }
+            double dy = speed * sin(angle);
+            if (active_y + dy < 0 || active_y + dy > h_size) {
+                angle = -angle;
+                dy = speed * sin(angle);
+            }
+            active_x += dx;
+            active_y += dy;
+            angle += (rand() % 360 - 180) * 0.0001;
         }
 
         ~bug() = default;
@@ -528,7 +545,7 @@ namespace university_game {
         }
 
         void add_bug() {
-            bug new_bug(rand() % (v_size-cell_v_size), rand() % (h_size-cell_h_size), all_ids++);
+            bug new_bug(rand() % (v_size - cell_v_size-30)+30, rand() % (h_size - cell_h_size-30)+30, all_ids++);
             bugs_id.insert(new_bug.get_id());
             id_bug[new_bug.get_id()] = new_bug;
             count_bugs++;
@@ -560,7 +577,13 @@ namespace university_game {
                     return;
                 }
             }
+        }
 
+
+        void move_bugs() {
+            for (auto &cur_bur: id_bug) {
+                cur_bur.second.run_bug(v_size - cell_v_size, h_size - cell_h_size);
+            }
         }
 
         void draw(sf::RenderTarget &target, sf::RenderStates states) const override;

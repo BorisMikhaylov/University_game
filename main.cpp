@@ -201,9 +201,10 @@ int main() {
         if (game_started) {
             sf::Event event{};
             if (minigame_bugs_started) { //even if nothing is happening, the bugs still are moving and appearing
-                for (int i: mg_bugs.bugs_id) {
-                    mg_bugs.move_bug(i);
-                }
+//                for (int i: mg_bugs.bugs_id) {
+//                    mg_bugs.move_bug(i);
+//                }
+                mg_bugs.move_bugs();
                 if (rand() % 2000 == 0 && mg_bugs.count_bugs <= 20) {
                     mg_bugs.add_bug();
                 }
@@ -443,8 +444,8 @@ int main() {
                         std::vector<int> ids_to_remove;
                         for (int ids_bugs: mg_bugs.bugs_id) {
                             university_game::bug cur_bug = mg_bugs.id_bug[ids_bugs];
-                            if (std::abs(mouse_pos_x - cur_bug.active_x) <= 20 &&
-                                std::abs(mouse_pos_y - cur_bug.active_y) <= 20) {
+                            if (std::abs(mouse_pos_x - cur_bug.active_x) <= university_game::cell_v_size / 2 &&
+                                std::abs(mouse_pos_y - cur_bug.active_y) <= university_game::cell_h_size / 2) {
                                 ids_to_remove.push_back(ids_bugs);
                             }
                         }
